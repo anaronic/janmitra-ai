@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import get_settings
 from app.database import init_db
+from app.routers import documents
 
 
 @asynccontextmanager
@@ -36,3 +37,6 @@ app.add_middleware(
 @app.get("/health")
 def health() -> dict[str, str]:
     return {"status": "ok", "service": "janmitra-ai"}
+
+
+app.include_router(documents.router)
