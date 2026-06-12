@@ -65,17 +65,34 @@ See `backend/.env.example`. Never commit your real `.env`.
 
 ## Deployment
 
-### Backend — Render
-`render.yaml` (repo root) defines the service. In Render: **New > Blueprint**, point at
-this repo. Set the secret env vars when prompted:
+Deploy the **backend first** (you need its URL for the frontend), then the frontend, then
+point the backend's CORS at the frontend URL.
+
+### 1. Backend — Render
+`render.yaml` (repo root) defines the service (Python pinned to 3.12 for reproducible builds).
+In Render: **New > Blueprint** and point at this repo. Set the secret env vars when prompted:
 - `GEMINI_API_KEY` — your Gemini key
-- `CORS_ORIGINS` — your deployed frontend URL (e.g. `https://janmitra-ai.vercel.app`)
+- `CORS_ORIGINS` — set after step 2 to your Vercel URL (e.g. `https://janmitra-ai.vercel.app`).
+  You can deploy first and edit this once you have the frontend URL.
+
+Note the backend URL Render gives you, e.g. `https://janmitra-backend.onrender.com`.
 
 > The free plan uses an ephemeral filesystem, so uploaded documents and chat history reset on
 > redeploy. Upgrade to a paid instance with a disk for durable storage (see comments in `render.yaml`).
 
-### Frontend — Vercel
+### 2. Frontend — Vercel
 `frontend/vercel.json` configures the Vite build. In Vercel, import the repo, set the
 **root directory** to `frontend`, and add the env var:
-- `VITE_API_BASE_URL` — your deployed backend URL (e.g. `https://janmitra-backend.onrender.com`)
+- `VITE_API_BASE_URL` — the backend URL from step 1.
+
+Vercel gives you the shareable link (e.g. `https://janmitra-ai.vercel.app`).
+
+### 3. Connect them
+Back in Render, set `CORS_ORIGINS` to your Vercel URL and redeploy. Done.
+
+> Heads-up on quota: a Gemini API key on the **free tier** is rate-limited (429) and the popular
+> models can be busy (503). The backend automatically falls back across models
+> (`GEMINI_MODEL` → `GEMINI_FALLBACK_MODELS`). For reliable production use, enable pay-as-you-go
+> billing in Google AI Studio. (Google AI Plus is a consumer Gemini-app plan and does not grant API quota.)
+
 
