@@ -6,6 +6,7 @@ making it straightforward to swap providers (or add a local model) later.
 from __future__ import annotations
 
 import json
+import time
 from functools import lru_cache
 from typing import Any
 
@@ -15,10 +16,11 @@ from app.config import get_settings
 
 
 class GeminiUnavailable(HTTPException):
-    def __init__(self) -> None:
+    def __init__(self, detail: str | None = None) -> None:
         super().__init__(
             status_code=503,
-            detail="Gemini API is not configured. Set GEMINI_API_KEY in the backend .env.",
+            detail=detail
+            or "Gemini API is not configured. Set GEMINI_API_KEY in the backend .env.",
         )
 
 
@@ -34,6 +36,36 @@ def _get_client():
 
 def is_configured() -> bool:
     return bool(get_settings().gemini_api_key)
+
+
+def _generate(contents: list[Any], *, json_mode: bool = False, retries: int = 3):
+    """Call Gemini with simple backoff, mapping API failures to clean 503s."""
+    from google.genai import errors, types
+
+    client = _get_client()
+    settings = get_settings()
+    config = (
+        types.GenerateContentConfig(response_mime_type="application/json")
+        if json_mode
+        else None
+    )
+
+    last_error: Exception | None = None
+    for attempt in range(retries):
+        try:
+            return client.models.generate_content(
+                model=settings.gemini_model, contents=contents, config=config
+            )
+        except errors.APIError as exc:  # transient (429/503) or quota errors
+            last_error = exc
+            if exc.code in (429, 503) and attempt < retries - 1:
+                time.sleep(2 * (attempt + 1))
+                continue
+            break
+
+    raise GeminiUnavailable(
+        f"Gemini request failed: {getattr(last_error, 'message', str(last_error))}"
+    )
 
 
 def _extract_json(text: str) -> dict[str, Any]:
@@ -72,14 +104,8 @@ empty list (or empty string for raw_text/document_type)."""
 
 def analyze_document(file_bytes: bytes, mime_type: str) -> dict[str, Any]:
     """Run Gemini extraction over a document, returning structured fields."""
-    client = _get_client()
-    settings = get_settings()
     from google.genai import types
 
     part = types.Part.from_bytes(data=file_bytes, mime_type=mime_type)
-    response = client.models.generate_content(
-        model=settings.gemini_model,
-        contents=[EXTRACTION_PROMPT, part],
-        config=types.GenerateContentConfig(response_mime_type="application/json"),
-    )
+    response = _generate([EXTRACTION_PROMPT, part], json_mode=True)
     return _extract_json(response.text or "{}")
