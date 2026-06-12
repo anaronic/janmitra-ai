@@ -1,0 +1,31 @@
+.app-shell {
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+  text-align: center;
+}
+
+.app-header h1 {
+  margin-bottom: 0.25rem;
+  font-size: 2.4rem;
+}
+
+.tagline {
+  color: #555;
+  margin-top: 0;
+}
+
+.app-main {
+  margin-top: 2rem;
+}
+
+.status-connected { color: #1a7f37; }
+.status-unavailable { color: #b42318; }
+.status-checking,
+.status-unknown { color: #9a6700; }
+
+.disclaimer {
+  margin-top: 1.5rem;
+  font-size: 0.85rem;
+  color: #777;
+}
