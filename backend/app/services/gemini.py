@@ -38,7 +38,7 @@ def is_configured() -> bool:
     return bool(get_settings().gemini_api_key)
 
 
-def _generate(contents: list[Any], *, json_mode: bool = False, retries: int = 3):
+def _generate(contents: list[Any], *, json_mode: bool = False, retries: int = 4):
     """Call Gemini with simple backoff, mapping API failures to clean 503s."""
     from google.genai import errors, types
 
@@ -50,22 +50,35 @@ def _generate(contents: list[Any], *, json_mode: bool = False, retries: int = 3)
         else None
     )
 
+    models = _model_chain()
     last_error: Exception | None = None
-    for attempt in range(retries):
-        try:
-            return client.models.generate_content(
-                model=settings.gemini_model, contents=contents, config=config
-            )
-        except errors.APIError as exc:  # transient (429/503) or quota errors
-            last_error = exc
-            if exc.code in (429, 503) and attempt < retries - 1:
-                time.sleep(2 * (attempt + 1))
-                continue
-            break
+    for model in models:
+        for attempt in range(retries):
+            try:
+                return client.models.generate_content(
+                    model=model, contents=contents, config=config
+                )
+            except errors.APIError as exc:  # transient (429/503) or quota errors
+                last_error = exc
+                if exc.code in (429, 503) and attempt < retries - 1:
+                    time.sleep(2 * (attempt + 1))
+                    continue
+                break  # move on to the next fallback model
 
     raise GeminiUnavailable(
-        f"Gemini request failed: {getattr(last_error, 'message', str(last_error))}"
+        f"Gemini request failed across models {models}: "
+        f"{getattr(last_error, 'message', str(last_error))}"
     )
+
+
+def _model_chain() -> list[str]:
+    """Configured model first, then fallbacks, de-duplicated and order-preserving."""
+    settings = get_settings()
+    chain = [settings.gemini_model] + [
+        m.strip() for m in settings.gemini_fallback_models.split(",") if m.strip()
+    ]
+    seen: set[str] = set()
+    return [m for m in chain if not (m in seen or seen.add(m))]
 
 
 def _extract_json(text: str) -> dict[str, Any]:
@@ -132,7 +145,9 @@ Strict rules:
 1. Answer ONLY using the DOCUMENT CONTENT provided below. Never invent information.
 2. If the answer is not in the document, reply that the document does not mention it (translated
    into the user's language).
-3. Detect the user's language from their message and reply ENTIRELY in that same language.
+3. Detect the user's language from their LATEST message and reply ENTIRELY in that same language
+   and script. If the user writes in English, reply in English. If in Hindi, reply in Hindi, etc.
+   Do not switch languages unless the user does.
 4. {education}
 5. Every factual statement must be backed by citations referencing the document (page/section/heading).
 

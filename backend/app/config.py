@@ -11,6 +11,7 @@ class Settings(BaseSettings):
 
     gemini_api_key: str = ""
     gemini_model: str = "gemini-2.5-flash"
+    gemini_fallback_models: str = "gemini-2.5-flash-lite,gemini-flash-latest"
     database_path: str = "data/janmitra.db"
     upload_dir: str = "uploads"
     cors_origins: str = "http://localhost:5173,http://127.0.0.1:5173"
