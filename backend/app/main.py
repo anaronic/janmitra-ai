@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import get_settings
 from app.database import init_db
-from app.routers import documents
+from app.routers import chat, documents
 
 
 @asynccontextmanager
@@ -40,3 +40,4 @@ def health() -> dict[str, str]:
 
 
 app.include_router(documents.router)
+app.include_router(chat.router)

@@ -1,6 +1,8 @@
 """Pydantic schemas for API requests and responses."""
 from __future__ import annotations
 
+from typing import Literal
+
 from pydantic import BaseModel
 
 
@@ -25,3 +27,35 @@ class DocumentAnalysis(BaseModel):
     amounts: list[str] = []
     clauses: list[str] = []
     signatories: list[str] = []
+
+
+EducationLevel = Literal["basic", "standard", "advanced"]
+
+
+class Citation(BaseModel):
+    source: str
+    quote: str = ""
+
+
+class ChatRequest(BaseModel):
+    message: str
+    education_level: EducationLevel = "standard"
+    language: str | None = None
+
+
+class ChatMessage(BaseModel):
+    role: str
+    content: str
+    citations: list[Citation] = []
+    language: str | None = None
+    created_at: str | None = None
+
+
+class ChatResponse(BaseModel):
+    reply: str
+    citations: list[Citation] = []
+    language: str
+
+
+class ChatHistory(BaseModel):
+    messages: list[ChatMessage]

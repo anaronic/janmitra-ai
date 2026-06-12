@@ -109,3 +109,53 @@ def analyze_document(file_bytes: bytes, mime_type: str) -> dict[str, Any]:
     part = types.Part.from_bytes(data=file_bytes, mime_type=mime_type)
     response = _generate([EXTRACTION_PROMPT, part], json_mode=True)
     return _extract_json(response.text or "{}")
+
+
+EDUCATION_GUIDANCE = {
+    "basic": (
+        "Audience: primary-school education, first-time banking users. Use very short sentences "
+        "and everyday examples. Avoid all legal/financial jargon. Example: instead of 'The borrower "
+        "shall indemnify the lender', say 'If the bank loses money because of this agreement, you "
+        "may have to pay them back.'"
+    ),
+    "standard": "Audience: an average adult. Use moderate terminology with brief explanations.",
+    "advanced": (
+        "Audience: lawyers, finance professionals, students. Preserve original terminology and "
+        "explain clauses precisely."
+    ),
+}
+
+CHAT_SYSTEM_PROMPT = """You are JanMitra AI, a multilingual financial and legal literacy assistant
+for Indian citizens. You are educational only and must never give legal or financial advice.
+
+Strict rules:
+1. Answer ONLY using the DOCUMENT CONTENT provided below. Never invent information.
+2. If the answer is not in the document, reply that the document does not mention it (translated
+   into the user's language).
+3. Detect the user's language from their message and reply ENTIRELY in that same language.
+4. {education}
+5. Every factual statement must be backed by citations referencing the document (page/section/heading).
+
+Return ONLY valid JSON with this shape:
+{{
+  "reply": "your answer in the user's language",
+  "language": "the language you replied in (English name, e.g. 'Hindi')",
+  "citations": [{{"source": "e.g. 'Page 2, Section 4' or 'Loan Terms'", "quote": "short supporting text"}}]
+}}
+If the document does not contain the answer, return an empty citations list."""
+
+
+def chat_about_document(
+    *, raw_text: str, message: str, education_level: str, history: list[dict[str, str]]
+) -> dict[str, Any]:
+    """Answer a question about a document, returning reply, language, and citations."""
+    guidance = EDUCATION_GUIDANCE.get(education_level, EDUCATION_GUIDANCE["standard"])
+    system = CHAT_SYSTEM_PROMPT.format(education=guidance)
+
+    convo = "\n".join(f"{m['role']}: {m['content']}" for m in history[-6:])
+    prompt = (
+        f"{system}\n\n=== DOCUMENT CONTENT ===\n{raw_text}\n=== END DOCUMENT ===\n\n"
+        f"=== CONVERSATION SO FAR ===\n{convo}\n\n=== USER MESSAGE ===\n{message}"
+    )
+    response = _generate([prompt], json_mode=True)
+    return _extract_json(response.text or "{}")
