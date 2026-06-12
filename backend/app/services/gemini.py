@@ -159,3 +159,69 @@ def chat_about_document(
     )
     response = _generate([prompt], json_mode=True)
     return _extract_json(response.text or "{}")
+
+
+RISK_PROMPT = """You are JanMitra AI analyzing a financial/legal document for an Indian citizen.
+Identify risk-relevant terms: interest rates, late payment penalties, hidden fees, guarantor
+obligations, property/collateral, arbitration clauses, auto-renewal clauses, and termination
+conditions. Use ONLY the document content; never invent terms.
+
+Return ONLY valid JSON:
+{
+  "overall_risk": "Low|Medium|High",
+  "items": [
+    {"category": "e.g. Late Payment Penalty", "level": "Low|Medium|High",
+     "explanation": "plain-language explanation", "source": "page/section if available"}
+  ]
+}
+If no risks are found, return an empty items list and overall_risk 'Low'."""
+
+RIGHTS_PROMPT = """You are JanMitra AI. From the document content only, generate the user's rights
+and responsibilities in simple language. Never invent obligations.
+
+Return ONLY valid JSON:
+{
+  "you_must_do": ["..."],
+  "other_party_must_do": ["..."],
+  "important_deadlines": ["..."],
+  "if_you_fail_to_comply": ["..."]
+}
+Use empty lists where the document is silent."""
+
+QUESTIONS_PROMPT = """You are JanMitra AI. Based on the document type and content, generate 5-6
+short, useful starter questions a citizen might ask about THIS document. Adapt to the document type.
+
+Return ONLY valid JSON: {"questions": ["...", "..."]}"""
+
+
+def extract_risks(raw_text: str) -> dict[str, Any]:
+    prompt = f"{RISK_PROMPT}\n\n=== DOCUMENT CONTENT ===\n{raw_text}"
+    response = _generate([prompt], json_mode=True)
+    return _extract_json(response.text or "{}")
+
+
+def extract_rights(raw_text: str) -> dict[str, Any]:
+    prompt = f"{RIGHTS_PROMPT}\n\n=== DOCUMENT CONTENT ===\n{raw_text}"
+    response = _generate([prompt], json_mode=True)
+    return _extract_json(response.text or "{}")
+
+
+def suggest_questions(raw_text: str) -> dict[str, Any]:
+    prompt = f"{QUESTIONS_PROMPT}\n\n=== DOCUMENT CONTENT ===\n{raw_text}"
+    response = _generate([prompt], json_mode=True)
+    return _extract_json(response.text or "{}")
+
+
+def match_schemes(raw_text: str, catalog: str, user_query: str | None = None) -> dict[str, Any]:
+    prompt = (
+        "You are JanMitra AI. Using the document content and conversation context, suggest which "
+        "government schemes from the CATALOG may be relevant. Only suggest from the catalog. For "
+        "each, explain briefly why it may be relevant. Always include the disclaimer that "
+        "eligibility must be verified through official sources.\n\n"
+        "Return ONLY valid JSON: {\"suggestions\": [{\"name\": \"...\", \"reason\": \"...\", "
+        "\"official_url\": \"...\"}], \"disclaimer\": \"Eligibility must be verified through official sources.\"}\n\n"
+        f"=== CATALOG ===\n{catalog}\n\n=== DOCUMENT CONTENT ===\n{raw_text}\n\n"
+        f"=== USER QUERY ===\n{user_query or 'What schemes may be relevant to me?'}"
+    )
+    response = _generate([prompt], json_mode=True)
+    return _extract_json(response.text or "{}")

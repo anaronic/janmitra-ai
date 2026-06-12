@@ -59,3 +59,37 @@ class ChatResponse(BaseModel):
 
 class ChatHistory(BaseModel):
     messages: list[ChatMessage]
+
+
+class RiskItem(BaseModel):
+    category: str
+    level: str = "Low"
+    explanation: str = ""
+    source: str = ""
+
+
+class RiskReport(BaseModel):
+    overall_risk: str = "Low"
+    items: list[RiskItem] = []
+
+
+class RightsReport(BaseModel):
+    you_must_do: list[str] = []
+    other_party_must_do: list[str] = []
+    important_deadlines: list[str] = []
+    if_you_fail_to_comply: list[str] = []
+
+
+class SuggestedQuestions(BaseModel):
+    questions: list[str] = []
+
+
+class SchemeSuggestion(BaseModel):
+    name: str
+    reason: str = ""
+    official_url: str = ""
+
+
+class SchemeReport(BaseModel):
+    suggestions: list[SchemeSuggestion] = []
+    disclaimer: str = "Eligibility must be verified through official sources."
