@@ -90,6 +90,15 @@ Vercel gives you the shareable link (e.g. `https://janmitra-ai.vercel.app`).
 ### 3. Connect them
 Back in Render, set `CORS_ORIGINS` to your Vercel URL and redeploy. Done.
 
+> **Render free tier sleeps** after ~15 min idle, so the first request after a pause is slow.
+> To keep it warm, either enable the GitHub Actions keep-alive (recommended) or run the script:
+>
+> - **GitHub Actions (no machine needed):** the workflow `.github/workflows/keep-alive.yml` pings
+>   `/health` every 10 minutes. Add a repository **variable** `BACKEND_URL` (Settings ▸ Secrets and
+>   variables ▸ Actions ▸ Variables) set to your Render URL. Enable Actions for the repo.
+> - **Standalone script:** `python scripts/keep_alive.py https://<your-backend>.onrender.com --loop`
+>   (runs anywhere with Python; schedule it via cron or Windows Task Scheduler if you prefer).
+
 > Heads-up on quota: a Gemini API key on the **free tier** is rate-limited (429) and the popular
 > models can be busy (503). The backend automatically falls back across models
 > (`GEMINI_MODEL` → `GEMINI_FALLBACK_MODELS`). For reliable production use, enable pay-as-you-go

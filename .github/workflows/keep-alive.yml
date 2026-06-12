@@ -1,0 +1,34 @@
+name: Keep Render Awake
+
+# Render's free tier spins down after ~15 minutes of inactivity. This workflow
+# pings the backend health endpoint on a schedule so it stays warm.
+#
+# Setup: add a repository variable named BACKEND_URL pointing at your Render URL,
+#   e.g. https://janmitra-backend.onrender.com
+#   (Repo Settings > Secrets and variables > Actions > Variables > New variable)
+
+on:
+  schedule:
+    - cron: "*/10 * * * *" # every 10 minutes
+  workflow_dispatch: {} # allows manual runs from the Actions tab
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping backend health endpoint
+        run: |
+          BASE="${{ vars.BACKEND_URL }}"
+          if [ -z "$BASE" ]; then
+            echo "BACKEND_URL repository variable is not set. Skipping."
+            exit 0
+          fi
+          BASE="${BASE%/}"
+          # Scheduled runs can be delayed, so ping a few times spaced out to
+          # reliably keep the instance warm within this single job.
+          for i in 1 2 3; do
+            echo "Ping $i -> $BASE/health"
+            code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 60 "$BASE/health" || echo "000")
+            echo "HTTP $code"
+            if [ "$i" -lt 3 ]; then sleep 120; fi
+          done
