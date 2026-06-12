@@ -4,8 +4,11 @@ import RightsPanel from "./components/RightsPanel";
 import RiskDashboard from "./components/RiskDashboard";
 import SchemesPanel from "./components/SchemesPanel";
 import Upload from "./components/Upload";
+import AshokaChakra from "./components/AshokaChakra";
 import { getRights, getRisk, getSchemes } from "./api";
 import "./App.css";
+
+const FONT_STEPS = [0.9, 1, 1.1];
 
 function App() {
   const [doc, setDoc] = useState(null);
@@ -14,6 +17,11 @@ function App() {
   const [rights, setRights] = useState(null);
   const [schemes, setSchemes] = useState(null);
   const [loadingInsights, setLoadingInsights] = useState(false);
+  const [fontStep, setFontStep] = useState(1);
+
+  useEffect(() => {
+    document.documentElement.style.fontSize = `${FONT_STEPS[fontStep] * 100}%`;
+  }, [fontStep]);
 
   useEffect(() => {
     if (!doc) return;
@@ -41,46 +49,131 @@ function App() {
   }
 
   return (
-    <div className="app-shell">
-      <header className="app-header">
-        <h1>JanMitra AI</h1>
-        <p className="tagline">
-          Understand your documents, rights, risks, and government schemes — in your language.
-        </p>
+    <div className="gov-page">
+      <a className="skip-link" href="#main-content">
+        Skip to main content
+      </a>
+
+      <div className="utility-bar">
+        <div className="utility-inner">
+          <span className="utility-tag">भारत · Digital Public Service</span>
+          <div className="utility-actions">
+            <span className="font-controls" role="group" aria-label="Adjust text size">
+              <button
+                type="button"
+                className="font-btn"
+                onClick={() => setFontStep((s) => Math.max(0, s - 1))}
+                disabled={fontStep === 0}
+                aria-label="Decrease text size"
+              >
+                A-
+              </button>
+              <button
+                type="button"
+                className="font-btn"
+                onClick={() => setFontStep(1)}
+                aria-label="Reset text size"
+              >
+                A
+              </button>
+              <button
+                type="button"
+                className="font-btn"
+                onClick={() => setFontStep((s) => Math.min(FONT_STEPS.length - 1, s + 1))}
+                disabled={fontStep === FONT_STEPS.length - 1}
+                aria-label="Increase text size"
+              >
+                A+
+              </button>
+            </span>
+            <span className="utility-lang">English | हिन्दी</span>
+          </div>
+        </div>
+      </div>
+
+      <header className="masthead">
+        <div className="masthead-inner">
+          <div className="emblem-wrap">
+            <AshokaChakra size={52} />
+          </div>
+          <div className="masthead-titles">
+            <p className="masthead-hindi">जनमित्र एआई</p>
+            <h1 className="masthead-en">JanMitra AI</h1>
+            <p className="masthead-sub">Digital Document Companion for Every Citizen</p>
+          </div>
+        </div>
       </header>
 
-      {!doc ? (
-        <Upload onReady={handleReady} />
-      ) : (
-        <main className="workspace">
-          <div className="doc-bar">
+      <div className="tricolour-strip" aria-hidden="true">
+        <span className="band-saffron" />
+        <span className="band-white" />
+        <span className="band-green" />
+      </div>
+
+      <nav className="gov-nav" aria-label="Primary">
+        <div className="gov-nav-inner">
+          <span className="nav-item active">Home</span>
+          <span className="nav-item">Document Analysis</span>
+          <span className="nav-item">Rights</span>
+          <span className="nav-item">Schemes</span>
+        </div>
+      </nav>
+
+      <main id="main-content" className="gov-main">
+        <p className="page-intro">
+          Understand your documents, rights, risks, and government schemes — in your language.
+        </p>
+
+        {!doc ? (
+          <Upload onReady={handleReady} />
+        ) : (
+          <section className="workspace">
+            <div className="doc-bar">
+              <div>
+                <strong>{doc.filename}</strong>
+                {analysis?.document_type && (
+                  <span className="muted"> · {analysis.document_type}</span>
+                )}
+              </div>
+              <button className="ghost" onClick={reset}>
+                Upload another
+              </button>
+            </div>
+
+            {loadingInsights && <p className="muted">Generating insights…</p>}
+
+            <div className="grid">
+              <div className="column">
+                <RiskDashboard report={risk} />
+                <RightsPanel report={rights} />
+                <SchemesPanel report={schemes} />
+              </div>
+              <div className="column">
+                <Chat documentId={doc.id} />
+              </div>
+            </div>
+          </section>
+        )}
+      </main>
+
+      <footer className="gov-footer">
+        <div className="gov-footer-inner">
+          <div className="footer-brand">
+            <AshokaChakra size={34} color="#ffffff" />
             <div>
-              <strong>{doc.filename}</strong>
-              {analysis?.document_type && <span className="muted"> · {analysis.document_type}</span>}
-            </div>
-            <button className="ghost" onClick={reset}>
-              Upload another
-            </button>
-          </div>
-
-          {loadingInsights && <p className="muted">Generating insights…</p>}
-
-          <div className="grid">
-            <div className="column">
-              <RiskDashboard report={risk} />
-              <RightsPanel report={rights} />
-              <SchemesPanel report={schemes} />
-            </div>
-            <div className="column">
-              <Chat documentId={doc.id} />
+              <strong>JanMitra AI</strong>
+              <p className="footer-note">Digital Document Companion</p>
             </div>
           </div>
-        </main>
-      )}
-
-      <footer className="app-footer">
-        Educational use only. JanMitra AI does not provide legal or financial advice. Scheme
-        eligibility must be verified through official sources.
+          <p className="footer-disclaimer">
+            Educational use only. JanMitra AI does not provide legal or financial advice. Scheme
+            eligibility must be verified through official sources.
+          </p>
+        </div>
+        <div className="footer-bottom">
+          <span>© {new Date().getFullYear()} JanMitra AI</span>
+          <span>Built for citizen empowerment</span>
+        </div>
       </footer>
     </div>
   );

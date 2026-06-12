@@ -1,13 +1,24 @@
 :root {
-  --bg: #f6f7f9;
+  /* Indian Government portal palette */
+  --gov-navy: #13357b;
+  --gov-navy-dark: #0e2a63;
+  --gov-saffron: #ff9933;
+  --gov-green: #138808;
+  --gov-blue-link: #1a4ba3;
+
+  --bg: #f4f6f9;
   --card: #ffffff;
-  --border: #e3e6ea;
-  --text: #1f2328;
-  --muted: #6b7280;
-  --accent: #0b6bcb;
+  --border: #d4dae3;
+  --text: #1c1c1c;
+  --muted: #5a6573;
+  --accent: var(--gov-navy);
   --high: #b42318;
   --medium: #9a6700;
   --low: #1a7f37;
+
+  --heading-font: "Mukta", "Noto Sans Devanagari", system-ui, sans-serif;
+  --body-font: "Noto Sans", "Noto Sans Devanagari", system-ui, -apple-system, "Segoe UI", Roboto,
+    sans-serif;
 }
 
 * {
@@ -18,29 +29,189 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--text);
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-family: var(--body-font);
+  font-size: 1rem;
+  line-height: 1.6;
 }
 
-.app-shell {
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--heading-font);
+  color: var(--gov-navy);
+  font-weight: 700;
+}
+
+a {
+  color: var(--gov-blue-link);
+}
+
+/* ---------- Accessibility skip link ---------- */
+.skip-link {
+  position: absolute;
+  left: -999px;
+  top: 0;
+  z-index: 100;
+  background: var(--gov-navy);
+  color: #fff;
+  padding: 0.5rem 1rem;
+  border-radius: 0 0 6px 0;
+}
+.skip-link:focus {
+  left: 0;
+}
+
+/* ---------- Page shell ---------- */
+.gov-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---------- Top utility bar ---------- */
+.utility-bar {
+  background: var(--gov-navy-dark);
+  color: #e9eefb;
+  font-size: 0.8rem;
+}
+.utility-inner {
   max-width: 1180px;
   margin: 0 auto;
-  padding: 1.5rem;
+  padding: 0.35rem 1.25rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.utility-tag {
+  letter-spacing: 0.02em;
+}
+.utility-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+.font-controls {
+  display: inline-flex;
+  gap: 0.25rem;
+}
+.font-btn {
+  background: transparent;
+  color: #e9eefb;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 4px;
+  padding: 0.1rem 0.45rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+.font-btn:disabled {
+  opacity: 0.4;
+}
+.font-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.15);
+}
+.utility-lang {
+  font-weight: 500;
 }
 
-.app-header {
-  text-align: center;
-  margin-bottom: 1.5rem;
+/* ---------- Masthead ---------- */
+.masthead {
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
 }
-
-.app-header h1 {
+.masthead-inner {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 1rem 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+.emblem-wrap {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+}
+.masthead-titles {
+  line-height: 1.2;
+}
+.masthead-hindi {
   margin: 0;
-  font-size: 2.2rem;
-  color: var(--accent);
+  font-family: var(--heading-font);
+  color: var(--gov-saffron);
+  font-weight: 700;
+  font-size: 1rem;
+}
+.masthead-en {
+  margin: 0.1rem 0 0;
+  font-size: 1.8rem;
+  letter-spacing: 0.01em;
+}
+.masthead-sub {
+  margin: 0.15rem 0 0;
+  color: var(--muted);
+  font-size: 0.85rem;
 }
 
-.tagline {
+/* ---------- Tricolour strip ---------- */
+.tricolour-strip {
+  display: flex;
+  height: 5px;
+}
+.band-saffron {
+  flex: 1;
+  background: var(--gov-saffron);
+}
+.band-white {
+  flex: 1;
+  background: #ffffff;
+}
+.band-green {
+  flex: 1;
+  background: var(--gov-green);
+}
+
+/* ---------- Primary nav ---------- */
+.gov-nav {
+  background: var(--gov-navy);
+}
+.gov-nav-inner {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0 1.25rem;
+  display: flex;
+  flex-wrap: wrap;
+}
+.nav-item {
+  color: #dfe6f6;
+  padding: 0.7rem 1rem;
+  font-size: 0.92rem;
+  font-weight: 500;
+  border-bottom: 3px solid transparent;
+  cursor: default;
+}
+.nav-item.active,
+.nav-item:hover {
+  color: #fff;
+  border-bottom-color: var(--gov-saffron);
+}
+
+/* ---------- Main ---------- */
+.gov-main {
+  flex: 1;
+  width: 100%;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 1.5rem 1.25rem 2.5rem;
+}
+.page-intro {
+  text-align: center;
   color: var(--muted);
-  margin: 0.25rem 0 0;
+  font-size: 1.02rem;
+  margin: 0.25rem 0 1.5rem;
 }
 
 .muted {
@@ -56,11 +227,13 @@ body {
 .upload-card {
   background: var(--card);
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-top: 4px solid var(--gov-saffron);
+  border-radius: 10px;
   padding: 2rem;
   text-align: center;
   max-width: 560px;
   margin: 0 auto;
+  box-shadow: 0 1px 3px rgba(19, 53, 123, 0.06);
 }
 
 .doc-bar {
@@ -69,7 +242,8 @@ body {
   align-items: center;
   background: var(--card);
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-left: 4px solid var(--gov-navy);
+  border-radius: 8px;
   padding: 0.75rem 1rem;
   margin-bottom: 1rem;
 }
@@ -96,12 +270,16 @@ body {
 .panel {
   background: var(--card);
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: 10px;
   padding: 1.25rem;
+  box-shadow: 0 1px 3px rgba(19, 53, 123, 0.06);
 }
 
 .panel h3 {
   margin-top: 0;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid var(--gov-saffron);
+  display: inline-block;
 }
 
 .panel-head {
@@ -118,9 +296,15 @@ body {
   color: #fff;
 }
 
-.risk-high { background: var(--high); }
-.risk-medium { background: var(--medium); }
-.risk-low { background: var(--low); }
+.risk-high {
+  background: var(--high);
+}
+.risk-medium {
+  background: var(--medium);
+}
+.risk-low {
+  background: var(--low);
+}
 
 .risk-list,
 .scheme-list {
@@ -148,6 +332,7 @@ body {
 
 .rights-block h4 {
   margin: 0.75rem 0 0.25rem;
+  color: var(--gov-navy-dark);
 }
 
 .disclaimer {
@@ -186,12 +371,14 @@ body {
   max-width: 85%;
   padding: 0.6rem 0.85rem;
   border-radius: 12px;
-  background: #eef2f7;
+  background: #eef2f9;
+  border: 1px solid #e0e6f0;
 }
 
 .message.user .bubble {
-  background: var(--accent);
+  background: var(--gov-navy);
   color: #fff;
+  border-color: var(--gov-navy);
 }
 
 .bubble p {
@@ -204,7 +391,7 @@ body {
   padding: 0;
   margin: 0.5rem 0 0;
   font-size: 0.78rem;
-  color: var(--accent);
+  color: var(--gov-blue-link);
 }
 
 .message.user .citations {
@@ -223,6 +410,7 @@ body {
   border-radius: 8px;
   border: 1px solid var(--border);
   background: #fff;
+  color: var(--gov-navy);
   cursor: pointer;
 }
 
@@ -235,6 +423,7 @@ body {
 .chip {
   border: 1px solid var(--border);
   background: #fff;
+  color: var(--gov-navy);
   border-radius: 999px;
   padding: 0.35rem 0.7rem;
   font-size: 0.82rem;
@@ -242,7 +431,8 @@ body {
 }
 
 .chip:hover {
-  border-color: var(--accent);
+  border-color: var(--gov-navy);
+  background: #eef2f9;
 }
 
 .composer {
@@ -259,16 +449,22 @@ body {
   padding: 0.6rem;
   border: 1px solid var(--border);
   border-radius: 8px;
+  font-family: var(--body-font);
 }
 
 button {
   cursor: pointer;
   border: none;
-  background: var(--accent);
+  background: var(--gov-navy);
   color: #fff;
   padding: 0.55rem 1rem;
   border-radius: 8px;
-  font-weight: 500;
+  font-weight: 600;
+  font-family: var(--body-font);
+}
+
+button:hover:not(:disabled) {
+  background: var(--gov-navy-dark);
 }
 
 button:disabled {
@@ -278,19 +474,68 @@ button:disabled {
 
 button.ghost {
   background: transparent;
-  color: var(--accent);
-  border: 1px solid var(--border);
+  color: var(--gov-navy);
+  border: 1px solid var(--gov-navy);
+}
+
+button.ghost:hover:not(:disabled) {
+  background: #eef2f9;
 }
 
 .level-select select {
   padding: 0.3rem;
   border-radius: 6px;
   border: 1px solid var(--border);
+  font-family: var(--body-font);
 }
 
-.app-footer {
-  margin-top: 2rem;
-  text-align: center;
+/* ---------- Footer ---------- */
+.gov-footer {
+  margin-top: auto;
+  background: var(--gov-navy-dark);
+  color: #dfe6f6;
+}
+.gov-footer-inner {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 1.5rem 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+.footer-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.footer-brand strong {
+  font-family: var(--heading-font);
+  color: #fff;
+  font-size: 1.1rem;
+}
+.footer-note {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #b9c5e6;
+}
+.footer-disclaimer {
+  flex: 1;
+  min-width: 240px;
+  margin: 0;
+  font-size: 0.8rem;
+  color: #c3cdea;
+  font-style: italic;
+}
+.footer-bottom {
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  padding: 0.75rem 1.25rem;
+  max-width: 1180px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
   font-size: 0.78rem;
-  color: var(--muted);
+  color: #b9c5e6;
 }
