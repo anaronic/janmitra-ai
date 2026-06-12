@@ -62,3 +62,20 @@ Frontend runs at http://localhost:5173.
 
 ## Environment Variables (backend)
 See `backend/.env.example`. Never commit your real `.env`.
+
+## Deployment
+
+### Backend — Render
+`render.yaml` (repo root) defines the service. In Render: **New > Blueprint**, point at
+this repo. Set the secret env vars when prompted:
+- `GEMINI_API_KEY` — your Gemini key
+- `CORS_ORIGINS` — your deployed frontend URL (e.g. `https://janmitra-ai.vercel.app`)
+
+> The free plan uses an ephemeral filesystem, so uploaded documents and chat history reset on
+> redeploy. Upgrade to a paid instance with a disk for durable storage (see comments in `render.yaml`).
+
+### Frontend — Vercel
+`frontend/vercel.json` configures the Vite build. In Vercel, import the repo, set the
+**root directory** to `frontend`, and add the env var:
+- `VITE_API_BASE_URL` — your deployed backend URL (e.g. `https://janmitra-backend.onrender.com`)
+
