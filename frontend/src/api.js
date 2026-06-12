@@ -1,7 +1,25 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 
+// Surface which backend the app is talking to. On a deployed site this should be
+// your Render URL — if it still shows localhost, VITE_API_BASE_URL was not set at
+// build time (Vite bakes env vars in at build), so redeploy after setting it.
+if (typeof console !== "undefined") {
+  console.info(`[JanMitra] API base URL: ${API_BASE_URL}`);
+}
+
 async function request(path, options = {}) {
-  const response = await fetch(`${API_BASE_URL}${path}`, options);
+  let response;
+  try {
+    response = await fetch(`${API_BASE_URL}${path}`, options);
+  } catch {
+    // Network-level failure ("Failed to fetch"): wrong/unset API URL, backend
+    // asleep or down, CORS block, or mixed content (https page -> http API).
+    const isLocal = API_BASE_URL.includes("localhost") || API_BASE_URL.includes("127.0.0.1");
+    const hint = isLocal
+      ? "The app is pointing at localhost. If this is the deployed site, set VITE_API_BASE_URL to your backend URL in Vercel and redeploy."
+      : "Could not reach the backend. It may be waking from sleep (try again in ~30s), down, or blocking this origin via CORS.";
+    throw new Error(`Cannot reach the server at ${API_BASE_URL}. ${hint}`);
+  }
   if (!response.ok) {
     let detail = await response.text();
     try {

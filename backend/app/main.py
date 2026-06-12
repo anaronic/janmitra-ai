@@ -1,6 +1,7 @@
 """JanMitra AI FastAPI application entrypoint."""
 from __future__ import annotations
 
+import logging
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -10,10 +11,17 @@ from app.config import get_settings
 from app.database import init_db
 from app.routers import chat, documents, insights
 
+logger = logging.getLogger("janmitra")
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     init_db()
+    s = get_settings()
+    logger.info("JanMitra starting. Allowed CORS origins: %s", s.cors_origin_list or "(none set!)")
+    logger.info("Gemini configured: %s | model: %s", bool(s.gemini_api_key), s.gemini_model)
+    if not s.cors_origin_list:
+        logger.warning("CORS_ORIGINS is empty — browser requests from your frontend will be blocked.")
     yield
 
 
@@ -35,8 +43,14 @@ app.add_middleware(
 
 
 @app.get("/health")
-def health() -> dict[str, str]:
-    return {"status": "ok", "service": "janmitra-ai"}
+def health() -> dict[str, object]:
+    s = get_settings()
+    return {
+        "status": "ok",
+        "service": "janmitra-ai",
+        "gemini_configured": bool(s.gemini_api_key),
+        "allowed_origins": s.cors_origin_list,
+    }
 
 
 app.include_router(documents.router)
