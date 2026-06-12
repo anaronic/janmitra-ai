@@ -2,12 +2,13 @@
 from __future__ import annotations
 
 import uuid
+from pathlib import Path
 
 from fastapi import APIRouter, File, HTTPException, UploadFile
 
 from app.database import get_connection
-from app.models import DocumentList, DocumentSummary
-from app.services import storage
+from app.models import DocumentAnalysis, DocumentList, DocumentSummary
+from app.services import gemini, storage
 
 router = APIRouter(prefix="/api/documents", tags=["documents"])
 
@@ -74,3 +75,64 @@ def get_document(document_id: str) -> DocumentSummary:
     if row is None:
         raise HTTPException(status_code=404, detail="Document not found.")
     return DocumentSummary(**dict(row))
+
+
+def _build_analysis(document_id: str, extraction: dict) -> DocumentAnalysis:
+    return DocumentAnalysis(
+        document_id=document_id,
+        document_type=extraction.get("document_type", "") or "",
+        raw_text=extraction.get("raw_text", "") or "",
+        entities=extraction.get("entities", []) or [],
+        dates=extraction.get("dates", []) or [],
+        amounts=extraction.get("amounts", []) or [],
+        clauses=extraction.get("clauses", []) or [],
+        signatories=extraction.get("signatories", []) or [],
+    )
+
+
+@router.post("/{document_id}/analyze", response_model=DocumentAnalysis)
+def analyze_document(document_id: str) -> DocumentAnalysis:
+    conn = get_connection()
+    try:
+        row = conn.execute(
+            "SELECT id, content_type, stored_path FROM documents WHERE id = ?",
+            (document_id,),
+        ).fetchone()
+        if row is None:
+            raise HTTPException(status_code=404, detail="Document not found.")
+
+        file_bytes = Path(row["stored_path"]).read_bytes()
+        extraction = gemini.analyze_document(file_bytes, row["content_type"] or "application/pdf")
+        analysis = _build_analysis(document_id, extraction)
+
+        conn.execute(
+            "INSERT INTO document_analysis (document_id, raw_text, extraction_json) "
+            "VALUES (?, ?, ?) "
+            "ON CONFLICT(document_id) DO UPDATE SET raw_text=excluded.raw_text, "
+            "extraction_json=excluded.extraction_json, created_at=datetime('now')",
+            (document_id, analysis.raw_text, analysis.model_dump_json()),
+        )
+        conn.execute(
+            "UPDATE documents SET status = 'analyzed' WHERE id = ?", (document_id,)
+        )
+        conn.commit()
+    finally:
+        conn.close()
+    return analysis
+
+
+@router.get("/{document_id}/analysis", response_model=DocumentAnalysis)
+def get_analysis(document_id: str) -> DocumentAnalysis:
+    conn = get_connection()
+    try:
+        row = conn.execute(
+            "SELECT extraction_json FROM document_analysis WHERE document_id = ?",
+            (document_id,),
+        ).fetchone()
+    finally:
+        conn.close()
+    if row is None:
+        raise HTTPException(
+            status_code=404, detail="No analysis found. Run analyze first."
+        )
+    return DocumentAnalysis.model_validate_json(row["extraction_json"])

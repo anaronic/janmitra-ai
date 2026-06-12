@@ -14,3 +14,14 @@ class DocumentSummary(BaseModel):
 
 class DocumentList(BaseModel):
     documents: list[DocumentSummary]
+
+
+class DocumentAnalysis(BaseModel):
+    document_id: str
+    document_type: str = ""
+    raw_text: str = ""
+    entities: list[str] = []
+    dates: list[str] = []
+    amounts: list[str] = []
+    clauses: list[str] = []
+    signatories: list[str] = []

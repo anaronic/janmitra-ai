@@ -40,4 +40,12 @@ CREATE TABLE IF NOT EXISTS documents (
     status TEXT NOT NULL DEFAULT 'uploaded',
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
+
+CREATE TABLE IF NOT EXISTS document_analysis (
+    document_id TEXT PRIMARY KEY,
+    raw_text TEXT,
+    extraction_json TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    FOREIGN KEY (document_id) REFERENCES documents(id) ON DELETE CASCADE
+);
 """
