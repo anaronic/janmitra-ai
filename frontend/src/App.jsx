@@ -273,13 +273,15 @@ function App() {
 
             <div className="workspace-grid">
               <div className="insights-area">
-                <DocumentSnapshot analysis={analysis} />
-                <ActionPlanPanel
-                  plan={actionPlan}
-                  loading={loading.actionPlan}
-                  error={errors.actionPlan}
-                  onRetry={() => loadActionPlan()}
-                />
+                <div className="overview-cards">
+                  <DocumentSnapshot analysis={analysis} />
+                  <ActionPlanPanel
+                    plan={actionPlan}
+                    loading={loading.actionPlan}
+                    error={errors.actionPlan}
+                    onRetry={() => loadActionPlan()}
+                  />
+                </div>
                 <div className="insight-cards">
                   <RiskDashboard
                     report={risk}
@@ -301,11 +303,11 @@ function App() {
                     onApply={loadSchemes}
                     onRetry={() => loadSchemes(schemeParams)}
                   />
+                  <div id="chat" className="chat-area">
+                    <Chat documentId={doc.id} language={language} />
+                  </div>
                 </div>
               </div>
-              <aside id="chat" className="chat-area" aria-label="Document chat assistant">
-                <Chat documentId={doc.id} language={language} />
-              </aside>
             </div>
           </section>
         )}

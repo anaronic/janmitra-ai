@@ -372,8 +372,7 @@ a {
 }
 
 .workspace-grid {
-  grid-template-columns: minmax(0, 1fr) minmax(360px, 420px);
-  gap: 1.25rem;
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .insights-area {
@@ -383,32 +382,29 @@ a {
   gap: 1rem;
 }
 
+.overview-cards,
 .insight-cards {
   display: grid;
-  grid-template-columns: repeat(2, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr));
   gap: 1rem;
   align-items: start;
 }
 
-.insight-cards #schemes {
+.insight-cards #schemes,
+.chat-area {
   grid-column: 1 / -1;
 }
 
 .chat-area {
-  position: sticky;
-  top: 1rem;
   min-width: 0;
-  align-self: start;
 }
 
 @media (max-width: 880px) {
   .grid,
   .workspace-grid,
+  .overview-cards,
   .insight-cards {
     grid-template-columns: 1fr;
-  }
-  .chat-area {
-    position: static;
   }
   .journey-steps {
     grid-template-columns: 1fr;
@@ -525,8 +521,13 @@ a {
 .snapshot-grid,
 .rights-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
   gap: 0.75rem;
+}
+.snapshot-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+}
+.rights-grid {
+  grid-template-columns: 1fr;
 }
 .snapshot-block,
 .rights-block,
@@ -605,7 +606,7 @@ a {
 .chat-panel {
   display: flex;
   flex-direction: column;
-  min-height: min(680px, calc(100vh - 7rem));
+  min-height: 420px;
 }
 
 .chat-panel .panel-head {
@@ -626,7 +627,7 @@ a {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
-  max-height: 52vh;
+  max-height: 420px;
 }
 
 .message {
