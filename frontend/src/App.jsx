@@ -16,6 +16,14 @@ const LANGUAGES = [
   { value: "en", label: "English" },
   { value: "hi", label: "हिन्दी" },
 ];
+const SECTIONS = [
+  { id: "snapshot", label: "Snapshot" },
+  { id: "action-plan", label: "Action Plan" },
+  { id: "risks", label: "Risks" },
+  { id: "rights", label: "Rights" },
+  { id: "schemes", label: "Schemes" },
+  { id: "chat", label: "Ask Doc" },
+];
 
 function actionableError(message) {
   const text = message || "Request failed.";
@@ -40,6 +48,7 @@ function App() {
   const [schemeParams, setSchemeParams] = useState({});
   const [fontStep, setFontStep] = useState(1);
   const [language, setLanguage] = useState("en");
+  const [activeSection, setActiveSection] = useState("snapshot");
 
   useEffect(() => {
     document.documentElement.style.fontSize = `${FONT_STEPS[fontStep] * 100}%`;
@@ -119,6 +128,7 @@ function App() {
     setErrors({});
     setLoading({});
     setSchemeParams({ language });
+    setActiveSection("snapshot");
   }
 
   function reset() {
@@ -130,6 +140,7 @@ function App() {
     setActionPlan(null);
     setLoading({});
     setErrors({});
+    setActiveSection("snapshot");
   }
 
   return (
@@ -213,21 +224,16 @@ function App() {
           </a>
           {doc ? (
             <>
-              <a className="nav-item" href="#action-plan">
-                Action Plan
-              </a>
-              <a className="nav-item" href="#risks">
-                Risks
-              </a>
-              <a className="nav-item" href="#rights">
-                Rights
-              </a>
-              <a className="nav-item" href="#schemes">
-                Schemes
-              </a>
-              <a className="nav-item" href="#chat">
-                Chat
-              </a>
+              {SECTIONS.slice(1).map((section) => (
+                <button
+                  type="button"
+                  key={section.id}
+                  className={`nav-item nav-button ${activeSection === section.id ? "active" : ""}`}
+                  onClick={() => setActiveSection(section.id)}
+                >
+                  {section.label}
+                </button>
+              ))}
             </>
           ) : (
             <>
@@ -273,8 +279,25 @@ function App() {
 
             <div className="workspace-grid">
               <div className="insights-area">
-                <div className="overview-cards">
+                <div className="section-tabs" role="tablist" aria-label="Document sections">
+                  {SECTIONS.map((section) => (
+                    <button
+                      type="button"
+                      key={section.id}
+                      role="tab"
+                      aria-selected={activeSection === section.id}
+                      className={activeSection === section.id ? "active" : ""}
+                      onClick={() => setActiveSection(section.id)}
+                    >
+                      {section.label}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="section-pane" hidden={activeSection !== "snapshot"}>
                   <DocumentSnapshot analysis={analysis} />
+                </div>
+                <div className="section-pane" hidden={activeSection !== "action-plan"}>
                   <ActionPlanPanel
                     plan={actionPlan}
                     loading={loading.actionPlan}
@@ -282,19 +305,23 @@ function App() {
                     onRetry={() => loadActionPlan()}
                   />
                 </div>
-                <div className="insight-cards">
+                <div className="section-pane" hidden={activeSection !== "risks"}>
                   <RiskDashboard
                     report={risk}
                     loading={loading.risk}
                     error={errors.risk}
                     onRetry={() => loadRisk()}
                   />
+                </div>
+                <div className="section-pane" hidden={activeSection !== "rights"}>
                   <RightsPanel
                     report={rights}
                     loading={loading.rights}
                     error={errors.rights}
                     onRetry={() => loadRights()}
                   />
+                </div>
+                <div className="section-pane" hidden={activeSection !== "schemes"}>
                   <SchemesPanel
                     report={schemes}
                     loading={loading.schemes}
@@ -303,9 +330,9 @@ function App() {
                     onApply={loadSchemes}
                     onRetry={() => loadSchemes(schemeParams)}
                   />
-                  <div id="chat" className="chat-area">
-                    <Chat documentId={doc.id} language={language} />
-                  </div>
+                </div>
+                <div id="chat" className="section-pane chat-area" hidden={activeSection !== "chat"}>
+                  <Chat documentId={doc.id} language={language} />
                 </div>
               </div>
             </div>

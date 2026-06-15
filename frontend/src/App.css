@@ -211,6 +211,16 @@ a {
   border-bottom-color: var(--gov-saffron);
 }
 
+.nav-button {
+  background: transparent;
+  border-radius: 0;
+  border: 0;
+}
+
+.nav-button:hover:not(:disabled) {
+  background: transparent;
+}
+
 .nav-item.locked {
   color: #aeb9d4;
   cursor: not-allowed;
@@ -382,17 +392,38 @@ a {
   gap: 1rem;
 }
 
-.overview-cards,
-.insight-cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr));
-  gap: 1rem;
-  align-items: start;
+.section-tabs {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  padding: 0.35rem;
+  background: #e8eefc;
+  border: 1px solid var(--border);
+  border-radius: 12px;
 }
 
-.insight-cards #schemes,
-.chat-area {
-  grid-column: 1 / -1;
+.section-tabs button {
+  flex: 0 0 auto;
+  background: transparent;
+  color: var(--gov-navy);
+  border: 1px solid transparent;
+  border-radius: 999px;
+  padding: 0.45rem 0.85rem;
+}
+
+.section-tabs button:hover:not(:disabled),
+.section-tabs button.active {
+  background: #fff;
+  border-color: var(--gov-navy);
+  color: var(--gov-navy-dark);
+}
+
+.section-pane[hidden] {
+  display: none;
+}
+
+.section-pane > .panel {
+  width: 100%;
 }
 
 .chat-area {
@@ -401,9 +432,7 @@ a {
 
 @media (max-width: 880px) {
   .grid,
-  .workspace-grid,
-  .overview-cards,
-  .insight-cards {
+  .workspace-grid {
     grid-template-columns: 1fr;
   }
   .journey-steps {
