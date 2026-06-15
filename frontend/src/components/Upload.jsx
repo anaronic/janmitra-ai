@@ -12,7 +12,7 @@ function friendlyError(message) {
   return text;
 }
 
-export default function Upload({ onReady, language, languages }) {
+export default function Upload({ onReady, language, outputLanguage, languages }) {
   const inputRef = useRef(null);
   const [busy, setBusy] = useState(false);
   const [sampleBusy, setSampleBusy] = useState("");
@@ -26,7 +26,7 @@ export default function Upload({ onReady, language, languages }) {
     setBusy(true);
     try {
       const doc = await uploadDocument(file);
-      const analysis = await analyzeDocument(doc.id, { language });
+      const analysis = await analyzeDocument(doc.id, { language: outputLanguage });
       onReady(doc, analysis);
     } catch (err) {
       setError(friendlyError(err.message));
@@ -50,7 +50,7 @@ export default function Upload({ onReady, language, languages }) {
     setError("");
     setSampleBusy(sampleId);
     try {
-      const res = await analyzeDemoDocument(sampleId, { language });
+      const res = await analyzeDemoDocument(sampleId, { language: outputLanguage });
       onReady(res.document, res.analysis);
     } catch (err) {
       setError(friendlyError(err.message));

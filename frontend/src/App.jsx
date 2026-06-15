@@ -8,7 +8,7 @@ import RiskDashboard from "./components/RiskDashboard";
 import SchemesPanel from "./components/SchemesPanel";
 import Upload from "./components/Upload";
 import AshokaChakra from "./components/AshokaChakra";
-import { getActionPlan, getRights, getRisk, getSchemes } from "./api";
+import { analyzeDocument, getActionPlan, getRights, getRisk, getSchemes } from "./api";
 import "./App.css";
 
 const FONT_STEPS = [0.9, 1, 1.1];
@@ -59,8 +59,10 @@ function App() {
   const [schemeParams, setSchemeParams] = useState({});
   const [fontStep, setFontStep] = useState(1);
   const [language, setLanguage] = useState("en");
+  const [contentLanguage, setContentLanguage] = useState("en");
   const [activeSection, setActiveSection] = useState("snapshot");
   const sectionLabels = SECTION_LABELS[language] || SECTION_LABELS.en;
+  const outputLanguage = LANGUAGES.find((item) => item.value === language)?.label || "English";
 
   useEffect(() => {
     document.documentElement.style.fontSize = `${FONT_STEPS[fontStep] * 100}%`;
@@ -84,25 +86,36 @@ function App() {
   const loadRisk = useCallback(
     (documentId = doc?.id) => {
       if (!documentId) return Promise.resolve();
-      return loadInsight("risk", () => getRisk(documentId, { language }), setRisk);
+      return loadInsight("risk", () => getRisk(documentId, { language: outputLanguage }), setRisk);
     },
-    [doc?.id, language, loadInsight],
+    [doc?.id, loadInsight, outputLanguage],
   );
 
   const loadRights = useCallback(
     (documentId = doc?.id) => {
       if (!documentId) return Promise.resolve();
-      return loadInsight("rights", () => getRights(documentId, { language }), setRights);
+      return loadInsight("rights", () => getRights(documentId, { language: outputLanguage }), setRights);
     },
-    [doc?.id, language, loadInsight],
+    [doc?.id, loadInsight, outputLanguage],
   );
 
   const loadActionPlan = useCallback(
     (documentId = doc?.id) => {
       if (!documentId) return Promise.resolve();
-      return loadInsight("actionPlan", () => getActionPlan(documentId, { language }), setActionPlan);
+      return loadInsight("actionPlan", () => getActionPlan(documentId, { language: outputLanguage }), setActionPlan);
     },
-    [doc?.id, language, loadInsight],
+    [doc?.id, loadInsight, outputLanguage],
+  );
+
+  const loadAnalysis = useCallback(
+    (documentId = doc?.id) => {
+      if (!documentId) return Promise.resolve();
+      return loadInsight("analysis", () => analyzeDocument(documentId, { language: outputLanguage }), (value) => {
+        setAnalysis(value);
+        setContentLanguage(language);
+      });
+    },
+    [doc?.id, language, loadInsight, outputLanguage],
   );
 
   const fetchSchemes = useCallback(
@@ -116,11 +129,17 @@ function App() {
   const loadSchemes = useCallback(
     (params = schemeParams) => {
       if (!doc) return Promise.resolve();
-      const nextParams = { ...params, language };
+      const nextParams = { ...params, language: outputLanguage };
       return fetchSchemes(doc.id, nextParams);
     },
-    [doc, fetchSchemes, language, schemeParams],
+    [doc, fetchSchemes, outputLanguage, schemeParams],
   );
+
+  useEffect(() => {
+    if (!doc || contentLanguage === language) return;
+    setAnalysis(null);
+    loadAnalysis(doc.id);
+  }, [contentLanguage, doc, language, loadAnalysis]);
 
   useEffect(() => {
     if (!doc) return;
@@ -131,8 +150,8 @@ function App() {
     loadRisk(doc.id);
     loadRights(doc.id);
     loadActionPlan(doc.id);
-    fetchSchemes(doc.id, { language });
-  }, [doc, fetchSchemes, language, loadActionPlan, loadRights, loadRisk]);
+    fetchSchemes(doc.id, { language: outputLanguage });
+  }, [doc, fetchSchemes, outputLanguage, loadActionPlan, loadRights, loadRisk]);
 
   function handleReady(document, analysisResult) {
     setDoc(document);
@@ -143,7 +162,8 @@ function App() {
     setActionPlan(null);
     setErrors({});
     setLoading({});
-    setSchemeParams({ language });
+    setSchemeParams({ language: outputLanguage });
+    setContentLanguage(language);
     setActiveSection("snapshot");
   }
 
@@ -156,6 +176,7 @@ function App() {
     setActionPlan(null);
     setLoading({});
     setErrors({});
+    setContentLanguage(language);
     setActiveSection("snapshot");
   }
 
@@ -277,7 +298,12 @@ function App() {
         {!doc ? (
           <>
             <GuidedJourney />
-            <Upload onReady={handleReady} language={language} languages={LANGUAGES} />
+            <Upload
+              onReady={handleReady}
+              language={language}
+              outputLanguage={outputLanguage}
+              languages={LANGUAGES}
+            />
           </>
         ) : (
           <section id="document-analysis" className="workspace">

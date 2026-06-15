@@ -16,11 +16,12 @@ export default function Chat({ documentId, language }) {
   const [error, setError] = useState("");
   const [suggestions, setSuggestions] = useState([]);
   const bottomRef = useRef(null);
+  const outputLanguage = language === "hi" ? "Hindi" : "English";
 
   useEffect(() => {
     if (!documentId) return;
-    getSuggestedQuestions(documentId, { language }).then((q) => setSuggestions(q.questions)).catch(() => {});
-  }, [documentId, language]);
+    getSuggestedQuestions(documentId, { language: outputLanguage }).then((q) => setSuggestions(q.questions)).catch(() => {});
+  }, [documentId, outputLanguage]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -34,7 +35,7 @@ export default function Chat({ documentId, language }) {
     setMessages((m) => [...m, { role: "user", content: message, citations: [] }]);
     setBusy(true);
     try {
-      const res = await sendChat(documentId, message, level, language);
+      const res = await sendChat(documentId, message, level, outputLanguage);
       setMessages((m) => [
         ...m,
         { role: "assistant", content: res.reply, citations: res.citations, language: res.language },
