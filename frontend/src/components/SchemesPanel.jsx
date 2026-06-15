@@ -1,7 +1,7 @@
 export default function SchemesPanel({ report }) {
   if (!report) return null;
   return (
-    <section className="panel">
+    <section id="schemes" className="panel">
       <h3>Relevant Government Schemes</h3>
       {report.suggestions.length === 0 ? (
         <p className="muted">No clearly relevant schemes found for this document.</p>

@@ -15,7 +15,7 @@ function List({ title, items }) {
 export default function RightsPanel({ report }) {
   if (!report) return null;
   return (
-    <section className="panel">
+    <section id="rights" className="panel">
       <h3>Rights & Responsibilities</h3>
       <List title="What you must do" items={report.you_must_do} />
       <List title="What the other party must do" items={report.other_party_must_do} />

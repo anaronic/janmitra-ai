@@ -22,7 +22,7 @@ export default function Upload({ onReady }) {
   }
 
   return (
-    <div className="upload-card">
+    <div id="document-analysis" className="upload-card">
       <h2>Upload a document</h2>
       <p className="muted">PDF, image, or scanned document (max 20 MB).</p>
       <input

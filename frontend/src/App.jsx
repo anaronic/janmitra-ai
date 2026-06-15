@@ -25,7 +25,6 @@ function App() {
 
   useEffect(() => {
     if (!doc) return;
-    setLoadingInsights(true);
     Promise.allSettled([getRisk(doc.id), getRights(doc.id), getSchemes(doc.id)])
       .then(([r, ri, s]) => {
         if (r.status === "fulfilled") setRisk(r.value);
@@ -41,11 +40,13 @@ function App() {
     setRisk(null);
     setRights(null);
     setSchemes(null);
+    setLoadingInsights(true);
   }
 
   function reset() {
     setDoc(null);
     setAnalysis(null);
+    setLoadingInsights(false);
   }
 
   return (
@@ -112,10 +113,18 @@ function App() {
 
       <nav className="gov-nav" aria-label="Primary">
         <div className="gov-nav-inner">
-          <span className="nav-item active">Home</span>
-          <span className="nav-item">Document Analysis</span>
-          <span className="nav-item">Rights</span>
-          <span className="nav-item">Schemes</span>
+          <a className="nav-item active" href="#main-content" aria-current="page">
+            Home
+          </a>
+          <a className="nav-item" href="#document-analysis">
+            Document Analysis
+          </a>
+          <a className="nav-item" href="#rights">
+            Rights
+          </a>
+          <a className="nav-item" href="#schemes">
+            Schemes
+          </a>
         </div>
       </nav>
 
@@ -127,7 +136,7 @@ function App() {
         {!doc ? (
           <Upload onReady={handleReady} />
         ) : (
-          <section className="workspace">
+          <section id="document-analysis" className="workspace">
             <div className="doc-bar">
               <div>
                 <strong>{doc.filename}</strong>

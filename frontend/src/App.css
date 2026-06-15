@@ -187,14 +187,16 @@ a {
 }
 .nav-item {
   color: #dfe6f6;
+  text-decoration: none;
   padding: 0.7rem 1rem;
   font-size: 0.92rem;
   font-weight: 500;
   border-bottom: 3px solid transparent;
-  cursor: default;
+  cursor: pointer;
 }
 .nav-item.active,
-.nav-item:hover {
+.nav-item:hover,
+.nav-item:focus-visible {
   color: #fff;
   border-bottom-color: var(--gov-saffron);
 }
