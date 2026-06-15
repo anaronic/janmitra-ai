@@ -64,6 +64,20 @@ function listLines(items = []) {
   return items.map((item) => `- ${item}`).join("\n");
 }
 
+function escapeHtml(value = "") {
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+function htmlList(items = [], fallback) {
+  if (!items?.length) return `<li>${escapeHtml(fallback)}</li>`;
+  return items.map((item) => `<li>${escapeHtml(item)}</li>`).join("");
+}
+
 function buildReport({ doc, analysis, risk, rights, actionPlan, schemes, language }) {
   const hi = language === "hi";
   const title = hi ? "JanMitra AI दस्तावेज़ रिपोर्ट" : "JanMitra AI Document Report";
@@ -102,6 +116,116 @@ function buildReport({ doc, analysis, risk, rights, actionPlan, schemes, languag
       : "_This report is educational guidance only. Verify details with official sources._",
   ];
   return sections.join("\n\n");
+}
+
+function buildReportHtml({ doc, analysis, risk, rights, actionPlan, schemes, language }) {
+  const hi = language === "hi";
+  const title = hi ? "JanMitra AI दस्तावेज़ रिपोर्ट" : "JanMitra AI Document Report";
+  const notFound = hi ? "इस दस्तावेज़ में नहीं मिला।" : "Not found in this document.";
+  const riskItems = risk?.items?.length
+    ? risk.items
+        .map(
+          (item) => `
+            <article class="card">
+              <strong>${escapeHtml(item.category)} · ${escapeHtml(item.level)}</strong>
+              <p>${escapeHtml(item.explanation)}</p>
+              ${item.evidence ? `<blockquote>${escapeHtml(item.evidence)}</blockquote>` : ""}
+            </article>
+          `,
+        )
+        .join("")
+    : `<p>${escapeHtml(hi ? "कोई बड़ा जोखिम नहीं मिला।" : "No notable risks detected.")}</p>`;
+  const schemeItems = schemes?.suggestions?.length
+    ? schemes.suggestions
+        .map(
+          (scheme) => `
+            <article class="card">
+              <strong>${escapeHtml(scheme.name)}</strong>
+              <p>${escapeHtml(scheme.reason || scheme.eligibility_notes || "")}</p>
+              ${
+                scheme.required_documents?.length
+                  ? `<p><b>${escapeHtml(hi ? "दस्तावेज़:" : "Documents:")}</b> ${escapeHtml(scheme.required_documents.join(", "))}</p>`
+                  : ""
+              }
+            </article>
+          `,
+        )
+        .join("")
+    : `<p>${escapeHtml(hi ? "कोई स्पष्ट रूप से संबंधित योजना नहीं मिली।" : "No clearly relevant schemes found.")}</p>`;
+
+  return `<!doctype html>
+<html lang="${hi ? "hi" : "en"}">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>${escapeHtml(title)}</title>
+  <style>
+    :root { color-scheme: light; font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    body { margin: 0; background: #f7f3e8; color: #1f2a24; line-height: 1.55; }
+    main { max-width: 760px; margin: 0 auto; padding: 20px 14px 32px; }
+    header { background: linear-gradient(135deg, #0f5132, #166534); color: white; border-radius: 22px; padding: 22px; }
+    h1 { font-size: clamp(1.55rem, 6vw, 2.3rem); margin: 0 0 8px; }
+    h2 { font-size: 1.2rem; margin: 24px 0 10px; }
+    section, .card { background: #fffdf7; border: 1px solid #e2d9bd; border-radius: 18px; padding: 16px; margin-top: 12px; box-shadow: 0 8px 26px rgba(31, 42, 36, 0.08); }
+    ul { padding-left: 1.2rem; margin: 8px 0 0; }
+    li { margin: 6px 0; }
+    blockquote { border-left: 4px solid #f59e0b; margin: 10px 0 0; padding: 8px 12px; background: #fff7df; border-radius: 10px; }
+    .meta { opacity: 0.9; margin: 0; }
+    .grid { display: grid; gap: 12px; }
+    .disclaimer { font-size: 0.92rem; color: #5f5240; }
+    @media (min-width: 720px) { .grid.two { grid-template-columns: repeat(2, 1fr); } }
+    @media print { body { background: white; } main { max-width: none; padding: 0; } section, .card, header { box-shadow: none; break-inside: avoid; } }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>${escapeHtml(title)}</h1>
+      <p class="meta"><b>${escapeHtml(hi ? "दस्तावेज़" : "Document")}:</b> ${escapeHtml(doc?.filename || "Document")}</p>
+      <p class="meta"><b>${escapeHtml(hi ? "प्रकार" : "Type")}:</b> ${escapeHtml(analysis?.document_type || "Unknown")}</p>
+    </header>
+
+    <section>
+      <h2>${escapeHtml(hi ? "सारांश" : "Snapshot")}</h2>
+      <div class="grid two">
+        <div><b>${escapeHtml(hi ? "लोग / संस्थाएँ" : "People / entities")}</b><ul>${htmlList(analysis?.entities, notFound)}</ul></div>
+        <div><b>${escapeHtml(hi ? "तारीखें" : "Dates")}</b><ul>${htmlList(analysis?.dates, notFound)}</ul></div>
+        <div><b>${escapeHtml(hi ? "राशियाँ" : "Amounts")}</b><ul>${htmlList(analysis?.amounts, notFound)}</ul></div>
+        <div><b>${escapeHtml(hi ? "मुख्य शर्तें" : "Key clauses")}</b><ul>${htmlList(analysis?.clauses, notFound)}</ul></div>
+      </div>
+    </section>
+
+    <section>
+      <h2>${escapeHtml(hi ? "कार्य योजना" : "Action Plan")}</h2>
+      <b>${escapeHtml(hi ? "तुरंत करें" : "Immediate actions")}</b><ul>${htmlList(actionPlan?.immediate_actions, notFound)}</ul>
+      <b>${escapeHtml(hi ? "दस्तावेज़ जुटाएँ" : "Documents to collect")}</b><ul>${htmlList(actionPlan?.documents_to_collect, notFound)}</ul>
+      <b>${escapeHtml(hi ? "समयसीमाएँ" : "Deadlines")}</b><ul>${htmlList(actionPlan?.deadlines, notFound)}</ul>
+    </section>
+
+    <section>
+      <h2>${escapeHtml(hi ? "जोखिम" : "Risks")}</h2>
+      ${riskItems}
+    </section>
+
+    <section>
+      <h2>${escapeHtml(hi ? "अधिकार और जिम्मेदारियाँ" : "Rights & Responsibilities")}</h2>
+      <b>${escapeHtml(hi ? "आपको क्या करना है" : "What you must do")}</b><ul>${htmlList(rights?.you_must_do, notFound)}</ul>
+      <b>${escapeHtml(hi ? "दूसरे पक्ष को क्या करना है" : "What the other party must do")}</b><ul>${htmlList(rights?.other_party_must_do, notFound)}</ul>
+    </section>
+
+    <section>
+      <h2>${escapeHtml(hi ? "योजनाएँ" : "Schemes")}</h2>
+      ${schemeItems}
+    </section>
+
+    <p class="disclaimer">${escapeHtml(
+      hi
+        ? "यह रिपोर्ट केवल शैक्षिक मार्गदर्शन है। आधिकारिक स्रोतों से सत्यापित करें।"
+        : "This report is educational guidance only. Verify details with official sources.",
+    )}</p>
+  </main>
+</body>
+</html>`;
 }
 
 function actionableError(message) {
@@ -319,6 +443,10 @@ function App() {
     return buildReport({ doc, analysis, risk, rights, actionPlan, schemes, language });
   }
 
+  function currentReportHtml() {
+    return buildReportHtml({ doc, analysis, risk, rights, actionPlan, schemes, language });
+  }
+
   async function copyReport() {
     try {
       await navigator.clipboard.writeText(currentReport());
@@ -334,14 +462,32 @@ function App() {
   }
 
   function downloadReport() {
-    const blob = new Blob([currentReport()], { type: "text/markdown;charset=utf-8" });
+    const blob = new Blob([currentReportHtml()], { type: "text/html;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `${(doc?.filename || "janmitra-report").replace(/\.[^.]+$/, "")}-report.md`;
+    link.download = `${(doc?.filename || "janmitra-report").replace(/\.[^.]+$/, "")}-mobile-report.html`;
     link.click();
     URL.revokeObjectURL(url);
-    setReportStatus(hi ? "रिपोर्ट डाउनलोड हो गई।" : "Report downloaded.");
+    setReportStatus(hi ? "मोबाइल रिपोर्ट डाउनलोड हो गई।" : "Mobile report downloaded.");
+  }
+
+  function printReport() {
+    const reportWindow = window.open("", "_blank");
+    if (!reportWindow) {
+      downloadReport();
+      setReportStatus(
+        hi
+          ? "पॉप-अप बंद था, इसलिए मोबाइल रिपोर्ट डाउनलोड कर दी गई।"
+          : "Popup was blocked, so the mobile report was downloaded.",
+      );
+      return;
+    }
+    reportWindow.document.write(currentReportHtml());
+    reportWindow.document.close();
+    reportWindow.focus();
+    setTimeout(() => reportWindow.print(), 250);
+    setReportStatus(hi ? "PDF सेव करने के लिए प्रिंट विकल्प चुनें।" : "Choose Print/Save as PDF in the print dialog.");
   }
 
   return (
@@ -516,7 +662,10 @@ function App() {
                   {hi ? "रिपोर्ट कॉपी करें" : "Copy report"}
                 </button>
                 <button type="button" onClick={downloadReport}>
-                  {hi ? "रिपोर्ट डाउनलोड करें" : "Download report"}
+                  {hi ? "मोबाइल रिपोर्ट" : "Mobile report"}
+                </button>
+                <button type="button" onClick={printReport}>
+                  {hi ? "PDF सेव करें" : "Save PDF"}
                 </button>
               </div>
             </div>

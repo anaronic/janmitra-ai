@@ -14,7 +14,7 @@ JanMitra AI is a multilingual financial and legal literacy assistant for Indian 
 - **Scheme personalization:** filter scheme matches by state, age, occupation, income band, category, residence, gender, and language.
 - **English/Hindi selector:** user-controlled language experience applied across generated sections, scheme matching, sample metadata, and chat responses.
 - **Resilience UX:** state-aware navigation, loading states, retry handling, and cold-start messaging for free-tier backend hosting.
-- **Persistence and sharing MVP:** browser-local recent documents, safe delete, and offline Markdown report export/copy.
+- **Persistence and sharing MVP:** browser-local recent documents, safe delete, copyable text reports, mobile-first HTML export, and browser save-as-PDF support.
 
 ## Core Features
 
@@ -50,7 +50,7 @@ Backend API docs are available at `http://localhost:8000/docs` when running loca
 
 Supported scheme query params: `state`, `age`, `occupation`, `income_band`, `category`, `residence`, `gender`, and `language`.
 
-Recent documents are stored only in the user's browser local storage. Backend document durability depends on the deployment storage; Render free-tier filesystem data may reset on redeploy.
+Recent documents are stored only in the user's browser local storage. Backend document durability depends on the deployment storage; Render free-tier filesystem data may reset on redeploy. The mobile report download is a standalone HTML file that opens well on phones; use **Save PDF** to trigger the browser/OS print-to-PDF flow.
 
 ## Tech Stack
 

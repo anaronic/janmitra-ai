@@ -88,6 +88,34 @@ SAMPLES: tuple[SampleDocument, ...] = (
         ],
         signatories=["Owner", "Tenant"],
     ),
+    SampleDocument(
+        id="ration-card-address-update",
+        title="Ration card address update notice",
+        description="Sample public-service notice covering address proof, Aadhaar seeding, FPS transfer, and a response deadline.",
+        document_type="Ration Card Service Notice",
+        language="English",
+        filename="demo-ration-card-address-update.txt",
+        raw_text=(
+            "Public Distribution System Address Update Notice\n"
+            "Household head: Meena Kumari. Ration card number: MH-APL-458921. Current FPS: Shakti Fair Price Shop, Ward 12, Pune, Maharashtra.\n"
+            "The household has requested transfer of ration card address to Ward 18 after moving residence. "
+            "Please submit updated address proof, Aadhaar numbers of all household members, electricity bill or rent agreement, "
+            "and one passport photo of the household head at the Taluka Supply Office by 20 July 2026.\n"
+            "Until the transfer is approved, collect monthly ration from the current FPS and keep transaction receipts. "
+            "Failure to submit documents may delay FPS transfer and monthly entitlement delivery. "
+            "No agent fee is required for this service; report any demand for money to the district supply helpline."
+        ),
+        entities=["Meena Kumari", "Shakti Fair Price Shop", "Taluka Supply Office", "District Supply Helpline"],
+        dates=["Submit documents by 20 July 2026", "Monthly ration collection until transfer approval"],
+        amounts=["No agent fee is required"],
+        clauses=[
+            "Household must submit updated address proof and Aadhaar numbers of all members.",
+            "Electricity bill or rent agreement can support the address change request.",
+            "Current FPS should be used until transfer approval.",
+            "Any demand for agent fee should be reported to the district supply helpline.",
+        ],
+        signatories=["Household head", "Taluka Supply Officer"],
+    ),
 )
 
 
@@ -156,6 +184,22 @@ def analysis_for(sample: SampleDocument, document_id: str, language: str | None 
                 ],
                 signatories=["मालिक", "किरायेदार"],
             )
+        if sample.id == "ration-card-address-update":
+            return DocumentAnalysis(
+                document_id=document_id,
+                document_type="राशन कार्ड सेवा नोटिस",
+                raw_text=sample.raw_text,
+                entities=["मीना कुमारी", "शक्ति फेयर प्राइस शॉप", "तालुका सप्लाई ऑफिस", "जिला सप्लाई हेल्पलाइन"],
+                dates=["20 जुलाई 2026 तक दस्तावेज़ जमा करें", "ट्रांसफर मंज़ूर होने तक मासिक राशन मौजूदा FPS से लें"],
+                amounts=["एजेंट शुल्क आवश्यक नहीं है"],
+                clauses=[
+                    "परिवार को नया पता प्रमाण और सभी सदस्यों के Aadhaar नंबर जमा करने हैं।",
+                    "बिजली बिल या किराया समझौता पता बदलने के अनुरोध में सहायक हो सकता है।",
+                    "ट्रांसफर मंज़ूर होने तक मौजूदा FPS से राशन लेना चाहिए।",
+                    "एजेंट शुल्क माँगे जाने पर जिला सप्लाई हेल्पलाइन पर शिकायत करें।",
+                ],
+                signatories=["परिवार मुखिया", "तालुका सप्लाई अधिकारी"],
+            )
     return DocumentAnalysis(
         document_id=document_id,
         document_type=sample.document_type,
@@ -191,6 +235,30 @@ def risk_for(sample_id: str, language: str | None = None) -> dict:
                     else "The notice warns not to share OTP or PIN with anyone claiming to renew the account.",
                     "source": "Safety instruction",
                     "evidence": "Do not share OTP or PIN with anyone claiming to renew the account by phone.",
+                },
+            ],
+        }
+    if sample_id == "ration-card-address-update":
+        return {
+            "overall_risk": "Medium",
+            "items": [
+                {
+                    "category": "दस्तावेज़ समयसीमा" if hi else "Document Deadline",
+                    "level": "Medium",
+                    "explanation": "20 जुलाई 2026 तक दस्तावेज़ जमा न करने पर FPS ट्रांसफर और मासिक राशन मिलने में देरी हो सकती है।"
+                    if hi
+                    else "Missing the 20 July 2026 submission date may delay FPS transfer and monthly ration delivery.",
+                    "source": "Submission deadline",
+                    "evidence": "Please submit updated address proof... by 20 July 2026.",
+                },
+                {
+                    "category": "अनधिकृत शुल्क" if hi else "Unauthorized Fee",
+                    "level": "Medium",
+                    "explanation": "नोटिस साफ कहता है कि इस सेवा के लिए एजेंट शुल्क आवश्यक नहीं है।"
+                    if hi
+                    else "The notice clearly says no agent fee is required for this service.",
+                    "source": "Fee warning",
+                    "evidence": "No agent fee is required for this service; report any demand for money.",
                 },
             ],
         }
@@ -232,6 +300,27 @@ def rights_for(sample_id: str, language: str | None = None) -> dict:
             "if_you_fail_to_comply": ["देरी से नवीनीकरण पर सब्सिडी वाले ब्याज लाभ में देरी हो सकती है।"]
             if hi
             else ["Late renewal may delay subsidised interest benefits."],
+        }
+    if sample_id == "ration-card-address-update":
+        return {
+            "you_must_do": [
+                "20 जुलाई 2026 तक तालुका सप्लाई ऑफिस में दस्तावेज़ जमा करें।",
+                "ट्रांसफर मंज़ूर होने तक मौजूदा FPS से राशन लें और रसीद रखें।",
+                "एजेंट शुल्क माँगे जाने पर जिला सप्लाई हेल्पलाइन पर शिकायत करें।",
+            ]
+            if hi
+            else [
+                "Submit documents at the Taluka Supply Office by 20 July 2026.",
+                "Collect ration from the current FPS until transfer approval and keep receipts.",
+                "Report any demand for agent fees to the district supply helpline.",
+            ],
+            "other_party_must_do": ["सप्लाई ऑफिस को पता अपडेट और FPS ट्रांसफर अनुरोध पर कार्रवाई करनी चाहिए।"]
+            if hi
+            else ["The supply office should process the address update and FPS transfer request."],
+            "important_deadlines": ["20 जुलाई 2026 तक दस्तावेज़ जमा करें।"] if hi else ["Submit documents by 20 July 2026."],
+            "if_you_fail_to_comply": ["FPS ट्रांसफर और मासिक राशन पात्रता वितरण में देरी हो सकती है।"]
+            if hi
+            else ["FPS transfer and monthly entitlement delivery may be delayed."],
         }
     return {
         "you_must_do": ["हर महीने की 5 तारीख तक Rs 12,000 किराया दें।", "30 दिन का लिखित नोटिस दें।"]
@@ -278,6 +367,33 @@ def action_plan_for(sample_id: str, language: str | None = None) -> dict:
             if hi
             else "This is educational guidance only. Verify details with official sources.",
         }
+    if sample_id == "ration-card-address-update":
+        return {
+            "immediate_actions": [
+                "20 जुलाई 2026 से पहले तालुका सप्लाई ऑफिस जाएँ।",
+                "सभी परिवार सदस्यों के Aadhaar नंबर और नया पता प्रमाण तैयार रखें।",
+                "राशन लेते समय मौजूदा FPS की रसीद सुरक्षित रखें।",
+            ]
+            if hi
+            else [
+                "Visit the Taluka Supply Office before 20 July 2026.",
+                "Prepare Aadhaar numbers for all household members and updated address proof.",
+                "Keep receipts when collecting ration from the current FPS.",
+            ],
+            "documents_to_collect": ["नया पता प्रमाण", "सभी सदस्यों के Aadhaar नंबर", "बिजली बिल या किराया समझौता", "परिवार मुखिया की फोटो"]
+            if hi
+            else ["Updated address proof", "Aadhaar numbers of all members", "Electricity bill or rent agreement", "Photo of household head"],
+            "deadlines": ["20 जुलाई 2026 तक दस्तावेज़ जमा करें।"] if hi else ["Submit documents by 20 July 2026."],
+            "questions_to_ask": ["FPS ट्रांसफर मंज़ूर होने में कितना समय लगेगा?", "क्या कोई ऑनलाइन रसीद या आवेदन संख्या मिलेगी?"]
+            if hi
+            else ["How long will FPS transfer approval take?", "Will I receive an acknowledgement number or online receipt?"],
+            "verification_steps": ["जमा किए दस्तावेज़ों की रसीद लें।", "किसी एजेंट शुल्क की माँग को हेल्पलाइन से सत्यापित करें।"]
+            if hi
+            else ["Collect an acknowledgement for submitted documents.", "Verify any fee demand through the district helpline."],
+            "disclaimer": "यह केवल शैक्षिक मार्गदर्शन है। आधिकारिक सप्लाई ऑफिस से विवरण सत्यापित करें।"
+            if hi
+            else "This is educational guidance only. Verify details with the official supply office.",
+        }
     return {
         "immediate_actions": ["किराया, जमा और नोटिस अवधि की प्रति सुरक्षित रखें।"] if hi else ["Keep a copy of rent, deposit, and notice-period terms."],
         "documents_to_collect": ["किराया रसीदें", "बिजली/पानी बिल रसीदें", "हस्ताक्षरित समझौता"] if hi else ["Rent receipts", "Utility bill receipts", "Signed agreement"],
@@ -299,6 +415,16 @@ def questions_for(sample_id: str, language: str | None = None) -> dict:
             "What documents do I need for KCC renewal?",
             "By when should I visit the branch?",
             "Could PMFBY apply to me?",
+        ]
+    elif sample_id == "ration-card-address-update":
+        questions = [
+            "मुझे पता अपडेट के लिए कौन से दस्तावेज़ चाहिए?",
+            "FPS ट्रांसफर कब तक पूरा होगा?",
+            "क्या इस सेवा के लिए कोई शुल्क देना है?",
+        ] if hi else [
+            "Which documents do I need for address update?",
+            "When will the FPS transfer be completed?",
+            "Do I need to pay any fee for this service?",
         ]
     else:
         questions = ["किराया कब देना है?", "सुरक्षा जमा कब लौटेगी?"] if hi else ["When is rent due?", "When should the security deposit be returned?"]
@@ -336,6 +462,38 @@ def schemes_for(sample_id: str, language: str | None = None) -> dict:
                 },
             ],
             "disclaimer": "पात्रता आधिकारिक स्रोतों से सत्यापित करें।" if hi else "Eligibility must be verified through official sources.",
+        }
+    if sample_id == "ration-card-address-update":
+        return {
+            "suggestions": [
+                {
+                    "name": "National Food Security Act / Ration Card Services",
+                    "reason": "दस्तावेज़ राशन कार्ड पता अपडेट और FPS ट्रांसफर से जुड़ा है।"
+                    if hi
+                    else "The document is about ration card address update and FPS transfer.",
+                    "official_url": "https://nfsa.gov.in",
+                    "confidence": 0.88,
+                    "eligibility_notes": "परिवार की श्रेणी और राज्य PDS नियमों के अनुसार पात्रता सत्यापित करें।"
+                    if hi
+                    else "Verify eligibility based on household category and state PDS rules.",
+                    "required_documents": ["Aadhaar", "पता प्रमाण" if hi else "Address proof", "राशन कार्ड नंबर" if hi else "Ration card number"],
+                },
+                {
+                    "name": "State PDS Grievance Redressal",
+                    "reason": "नोटिस एजेंट शुल्क की माँग को जिला सप्लाई हेल्पलाइन पर रिपोर्ट करने को कहता है।"
+                    if hi
+                    else "The notice asks users to report agent fee demands to the district supply helpline.",
+                    "official_url": "https://nfsa.gov.in/portal/Grievance_Management_System",
+                    "confidence": 0.72,
+                    "eligibility_notes": "शिकायत का उपयोग अनधिकृत शुल्क या FPS सेवा समस्या पर किया जा सकता है।"
+                    if hi
+                    else "Use grievance channels for unauthorized fees or FPS service issues.",
+                    "required_documents": ["शिकायत विवरण" if hi else "Complaint details", "रसीद/सबूत" if hi else "Receipt/evidence"],
+                },
+            ],
+            "disclaimer": "पात्रता और शिकायत प्रक्रिया आधिकारिक स्रोतों से सत्यापित करें।"
+            if hi
+            else "Eligibility and grievance process must be verified through official sources.",
         }
     return {"suggestions": [], "disclaimer": "पात्रता आधिकारिक स्रोतों से सत्यापित करें।" if hi else "Eligibility must be verified through official sources."}
 
