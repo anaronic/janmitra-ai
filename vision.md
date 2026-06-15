@@ -46,7 +46,7 @@ The product should present:
 
 ### 6. Language and Accessibility
 
-The experience should support English and Hindi selection, simple reading levels, clear loading/retry states, and Hindi text-to-speech where supported by the browser.
+The experience should support English and Hindi selection, simple reading levels, clear loading/retry states, and Hindi text-to-speech where supported by the browser. Once a user selects a language, generated sections should stay in that language instead of mixing languages.
 
 ## Non-Goals and Guardrails
 

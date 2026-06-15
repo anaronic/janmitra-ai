@@ -111,7 +111,40 @@ def get_sample(sample_id: str) -> SampleDocument:
     raise HTTPException(status_code=404, detail="Demo document not found.")
 
 
-def analysis_for(sample: SampleDocument, document_id: str) -> DocumentAnalysis:
+def analysis_for(sample: SampleDocument, document_id: str, language: str | None = None) -> DocumentAnalysis:
+    if (language or "").lower() in {"hi", "hindi"}:
+        if sample.id == "farmer-kcc-notice":
+            return DocumentAnalysis(
+                document_id=document_id,
+                document_type="किसान क्रेडिट कार्ड नोटिस",
+                raw_text=sample.raw_text,
+                entities=["सीता देवी", "ग्रामीण प्रगति बैंक", "प्रधानमंत्री फसल बीमा योजना"],
+                dates=["15 जून 2026 तक बकाया", "30 जून 2026 से पहले नवीनीकरण के लिए शाखा जाएँ"],
+                amounts=["KCC सीमा: Rs 1,20,000", "बकाया राशि: Rs 48,500"],
+                clauses=[
+                    "नवीनीकरण के लिए Aadhaar, खेती का प्रमाण, फोटो और फसल विवरण जमा करने हैं।",
+                    "देरी से नवीनीकरण पर सब्सिडी वाले ब्याज लाभ में देरी हो सकती है।",
+                    "PMFBY पात्रता अधिसूचित फसल और क्षेत्र के अनुसार जाँचनी होगी।",
+                    "फोन पर OTP या PIN साझा नहीं करना चाहिए।",
+                ],
+                signatories=["उधारकर्ता", "शाखा प्रबंधक"],
+            )
+        if sample.id == "tenant-rent-agreement":
+            return DocumentAnalysis(
+                document_id=document_id,
+                document_type="किराया समझौता",
+                raw_text=sample.raw_text,
+                entities=["राजेश कुमार", "अमीना खान", "ग्रीन होम्स"],
+                dates=["समझौता अवधि: 1 जुलाई 2026 से 30 जून 2027", "किराया हर महीने की 5 तारीख तक देय"],
+                amounts=["मासिक किराया: Rs 12,000", "सुरक्षा जमा: Rs 36,000"],
+                clauses=[
+                    "समझौता समाप्त करने से पहले दोनों पक्षों को 30 दिन का लिखित नोटिस देना होगा।",
+                    "मालिक को किराया रसीद देनी और दस्तावेज़ी कटौती के बाद जमा लौटानी होगी।",
+                    "किरायेदार को उपयोगिता बिल समय पर भरने और रसीदें रखने की जिम्मेदारी है।",
+                    "बड़ी संरचनात्मक मरम्मत मालिक की और छोटी दैनिक मरम्मत किरायेदार की जिम्मेदारी है।",
+                ],
+                signatories=["मालिक", "किरायेदार"],
+            )
     return DocumentAnalysis(
         document_id=document_id,
         document_type=sample.document_type,
@@ -124,7 +157,9 @@ def analysis_for(sample: SampleDocument, document_id: str) -> DocumentAnalysis:
     )
 
 
-def load_sample(conn: sqlite3.Connection, sample_id: str) -> tuple[DocumentSummary, DocumentAnalysis]:
+def load_sample(
+    conn: sqlite3.Connection, sample_id: str, language: str | None = None
+) -> tuple[DocumentSummary, DocumentAnalysis]:
     sample = get_sample(sample_id)
     document_id = f"demo-{sample.id}-{uuid.uuid4().hex}"
     sample_dir = storage.get_upload_dir() / "samples"
@@ -132,7 +167,7 @@ def load_sample(conn: sqlite3.Connection, sample_id: str) -> tuple[DocumentSumma
     stored_path = sample_dir / f"{document_id}-{sample.filename}"
     stored_path.write_text(sample.raw_text, encoding="utf-8")
 
-    analysis = analysis_for(sample, document_id)
+    analysis = analysis_for(sample, document_id, language)
     conn.execute(
         "INSERT INTO documents (id, filename, content_type, stored_path, status) "
         "VALUES (?, ?, ?, ?, 'analyzed') "

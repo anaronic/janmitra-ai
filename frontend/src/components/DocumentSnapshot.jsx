@@ -25,20 +25,41 @@ function SnapshotList({ title, items, empty }) {
   );
 }
 
-export default function DocumentSnapshot({ analysis }) {
+export default function DocumentSnapshot({ analysis, language }) {
   if (!analysis) return null;
+  const hi = language === "hi";
   return (
     <section className="panel snapshot-panel">
       <div className="panel-head">
-        <h3>Document Snapshot</h3>
-        <span className="badge badge-soft">{analysis.document_type || "Document"}</span>
+        <h3>{hi ? "दस्तावेज़ सारांश" : "Document Snapshot"}</h3>
+        <span className="badge badge-soft">{analysis.document_type || (hi ? "दस्तावेज़" : "Document")}</span>
       </div>
       <div className="snapshot-grid">
-        <SnapshotList title="People / entities" items={analysis.entities} empty="No named entities found." />
-        <SnapshotList title="Important dates" items={analysis.dates} empty="No dates detected." />
-        <SnapshotList title="Amounts" items={analysis.amounts} empty="No amounts detected." />
-        <SnapshotList title="Key clauses" items={analysis.clauses} empty="No clauses extracted." />
-        <SnapshotList title="Signatories" items={analysis.signatories} empty="No signatories detected." />
+        <SnapshotList
+          title={hi ? "लोग / संस्थाएँ" : "People / entities"}
+          items={analysis.entities}
+          empty={hi ? "कोई नामित संस्था नहीं मिली।" : "No named entities found."}
+        />
+        <SnapshotList
+          title={hi ? "महत्वपूर्ण तारीखें" : "Important dates"}
+          items={analysis.dates}
+          empty={hi ? "कोई तारीख नहीं मिली।" : "No dates detected."}
+        />
+        <SnapshotList
+          title={hi ? "राशियाँ" : "Amounts"}
+          items={analysis.amounts}
+          empty={hi ? "कोई राशि नहीं मिली।" : "No amounts detected."}
+        />
+        <SnapshotList
+          title={hi ? "मुख्य शर्तें" : "Key clauses"}
+          items={analysis.clauses}
+          empty={hi ? "कोई शर्त नहीं निकाली गई।" : "No clauses extracted."}
+        />
+        <SnapshotList
+          title={hi ? "हस्ताक्षरकर्ता" : "Signatories"}
+          items={analysis.signatories}
+          empty={hi ? "कोई हस्ताक्षरकर्ता नहीं मिला।" : "No signatories detected."}
+        />
       </div>
     </section>
   );

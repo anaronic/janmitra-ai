@@ -12,7 +12,7 @@ JanMitra AI is a multilingual financial and legal literacy assistant for Indian 
 - **Risk, rights, and schemes UI:** clearer cards with evidence, ranking, and source links/labels where the backend provides them.
 - **Citizen Action Plan:** document-specific next steps that translate analysis into practical actions.
 - **Scheme personalization:** filter scheme matches by state, age, occupation, income band, category, residence, gender, and language.
-- **English/Hindi selector:** user-controlled language experience with multilingual AI responses.
+- **English/Hindi selector:** user-controlled language experience applied across generated sections, scheme matching, sample metadata, and chat responses.
 - **Resilience UX:** state-aware navigation, loading states, retry handling, and cold-start messaging for free-tier backend hosting.
 
 ## Core Features

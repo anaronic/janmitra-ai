@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from "react";
-import { getChatHistory, getSuggestedQuestions, sendChat } from "../api";
+import { getSuggestedQuestions, sendChat } from "../api";
 import { isSpeechSupported, speak, stopSpeaking } from "../speech";
 
 const LEVELS = [
-  { value: "basic", label: "Basic" },
-  { value: "standard", label: "Standard" },
-  { value: "advanced", label: "Advanced" },
+  { value: "basic", label: { en: "Basic", hi: "सरल" } },
+  { value: "standard", label: { en: "Standard", hi: "मानक" } },
+  { value: "advanced", label: { en: "Advanced", hi: "उन्नत" } },
 ];
 
 export default function Chat({ documentId, language }) {
@@ -19,9 +19,8 @@ export default function Chat({ documentId, language }) {
 
   useEffect(() => {
     if (!documentId) return;
-    getChatHistory(documentId).then((h) => setMessages(h.messages)).catch(() => {});
-    getSuggestedQuestions(documentId).then((q) => setSuggestions(q.questions)).catch(() => {});
-  }, [documentId]);
+    getSuggestedQuestions(documentId, { language }).then((q) => setSuggestions(q.questions)).catch(() => {});
+  }, [documentId, language]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -52,11 +51,11 @@ export default function Chat({ documentId, language }) {
       <div className="panel-head">
         <h3>{language === "hi" ? "इस दस्तावेज़ पर सवाल पूछें" : "Ask about this document"}</h3>
         <label className="level-select">
-          Level:{" "}
+          {language === "hi" ? "स्तर" : "Level"}:{" "}
           <select value={level} onChange={(e) => setLevel(e.target.value)}>
             {LEVELS.map((l) => (
               <option key={l.value} value={l.value}>
-                {l.label}
+                {l.label[language] || l.label.en}
               </option>
             ))}
           </select>
@@ -101,7 +100,7 @@ export default function Chat({ documentId, language }) {
             </div>
           </div>
         ))}
-        {busy && <p className="muted">Thinking…</p>}
+        {busy && <p className="muted">{language === "hi" ? "सोचा जा रहा है…" : "Thinking…"}</p>}
         <div ref={bottomRef} />
       </div>
 

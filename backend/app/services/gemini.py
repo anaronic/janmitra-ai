@@ -115,12 +115,17 @@ Extract faithfully from the document. Do not invent information. If a field has 
 empty list (or empty string for raw_text/document_type)."""
 
 
-def analyze_document(file_bytes: bytes, mime_type: str) -> dict[str, Any]:
+def analyze_document(file_bytes: bytes, mime_type: str, language: str | None = None) -> dict[str, Any]:
     """Run Gemini extraction over a document, returning structured fields."""
     from google.genai import types
 
     part = types.Part.from_bytes(data=file_bytes, mime_type=mime_type)
-    response = _generate([EXTRACTION_PROMPT, part], json_mode=True)
+    prompt = (
+        f"{EXTRACTION_PROMPT}\n\n{_language_instruction(language)} Translate document_type, dates, "
+        "amounts, clauses, and signatories into the selected language. Keep raw_text as faithful "
+        "extracted text from the document."
+    )
+    response = _generate([prompt, part], json_mode=True)
     return _extract_json(response.text or "{}")
 
 
@@ -138,6 +143,17 @@ EDUCATION_GUIDANCE = {
     ),
 }
 
+
+def _language_instruction(language: str | None) -> str:
+    normalized = (language or "").strip().lower()
+    if normalized in {"hi", "hindi", "हिन्दी", "हिंदी"}:
+        return "Write all user-facing text in Hindi using Devanagari script."
+    if normalized in {"en", "english"}:
+        return "Write all user-facing text in English."
+    if normalized:
+        return f"Write all user-facing text in {language}."
+    return "Write all user-facing text in the user's selected language if provided; otherwise use English."
+
 CHAT_SYSTEM_PROMPT = """You are JanMitra AI, a multilingual financial and legal literacy assistant
 for Indian citizens. You are educational only and must never give legal or financial advice.
 
@@ -145,9 +161,8 @@ Strict rules:
 1. Answer ONLY using the DOCUMENT CONTENT provided below. Never invent information.
 2. If the answer is not in the document, reply that the document does not mention it (translated
    into the user's language).
-3. Detect the user's language from their LATEST message and reply ENTIRELY in that same language
-   and script. If the user writes in English, reply in English. If in Hindi, reply in Hindi, etc.
-   Do not switch languages unless the user does.
+3. If a selected output language is provided below, reply ENTIRELY in that language and script.
+   Otherwise detect the user's language from their LATEST message and reply in that same language.
 4. {education}
 5. Every factual statement must be backed by citations referencing the document (page/section/heading).
 
@@ -161,11 +176,17 @@ If the document does not contain the answer, return an empty citations list."""
 
 
 def chat_about_document(
-    *, raw_text: str, message: str, education_level: str, history: list[dict[str, str]]
+    *,
+    raw_text: str,
+    message: str,
+    education_level: str,
+    history: list[dict[str, str]],
+    preferred_language: str | None = None,
 ) -> dict[str, Any]:
     """Answer a question about a document, returning reply, language, and citations."""
     guidance = EDUCATION_GUIDANCE.get(education_level, EDUCATION_GUIDANCE["standard"])
-    system = CHAT_SYSTEM_PROMPT.format(education=guidance)
+    language_rule = _language_instruction(preferred_language)
+    system = CHAT_SYSTEM_PROMPT.format(education=f"{guidance} {language_rule}")
 
     convo = "\n".join(f"{m['role']}: {m['content']}" for m in history[-6:])
     prompt = (
@@ -209,20 +230,24 @@ short, useful starter questions a citizen might ask about THIS document. Adapt t
 Return ONLY valid JSON: {"questions": ["...", "..."]}"""
 
 
-def extract_risks(raw_text: str) -> dict[str, Any]:
-    prompt = f"{RISK_PROMPT}\n\n=== DOCUMENT CONTENT ===\n{raw_text}"
+def extract_risks(raw_text: str, language: str | None = None) -> dict[str, Any]:
+    prompt = (
+        f"{RISK_PROMPT}\n\n{_language_instruction(language)} Keep overall_risk and item level "
+        "values exactly as Low, Medium, or High.\n\n"
+        f"=== DOCUMENT CONTENT ===\n{raw_text}"
+    )
     response = _generate([prompt], json_mode=True)
     return _extract_json(response.text or "{}")
 
 
-def extract_rights(raw_text: str) -> dict[str, Any]:
-    prompt = f"{RIGHTS_PROMPT}\n\n=== DOCUMENT CONTENT ===\n{raw_text}"
+def extract_rights(raw_text: str, language: str | None = None) -> dict[str, Any]:
+    prompt = f"{RIGHTS_PROMPT}\n\n{_language_instruction(language)}\n\n=== DOCUMENT CONTENT ===\n{raw_text}"
     response = _generate([prompt], json_mode=True)
     return _extract_json(response.text or "{}")
 
 
-def suggest_questions(raw_text: str) -> dict[str, Any]:
-    prompt = f"{QUESTIONS_PROMPT}\n\n=== DOCUMENT CONTENT ===\n{raw_text}"
+def suggest_questions(raw_text: str, language: str | None = None) -> dict[str, Any]:
+    prompt = f"{QUESTIONS_PROMPT}\n\n{_language_instruction(language)}\n\n=== DOCUMENT CONTENT ===\n{raw_text}"
     response = _generate([prompt], json_mode=True)
     return _extract_json(response.text or "{}")
 
@@ -253,6 +278,32 @@ ACTION_PLAN_FALLBACK = {
     "disclaimer": "This is educational guidance only. Verify details with the document issuer or an official source.",
 }
 
+ACTION_PLAN_FALLBACK_HI = {
+    "immediate_actions": [
+        "दस्तावेज़ पूरा पढ़ें और शुल्क, तारीखें, हस्ताक्षर, जुर्माने और रद्द करने की शर्तें चिह्नित करें।",
+        "दस्तावेज़ जारी करने वाले, संदर्भ संख्या और संपर्क विवरण को आधिकारिक माध्यम से सत्यापित करें।",
+    ],
+    "documents_to_collect": [
+        "यदि जारीकर्ता ने माँगा हो तो सरकारी पहचान पत्र और पते का प्रमाण।",
+        "हस्ताक्षरित दस्तावेज़, भुगतान रसीदें, नोटिस और संबंधित पत्राचार की प्रतियाँ।",
+    ],
+    "deadlines": [
+        "कार्रवाई से पहले दस्तावेज़ में दी गई सभी तारीखें सत्यापित करें।",
+        "यदि समयसीमा स्पष्ट नहीं है, तो समाप्त होने से पहले जारीकर्ता से लिखित पुष्टि लें।",
+    ],
+    "questions_to_ask": [
+        "मुझ पर कौन से शुल्क, जुर्माने या जिम्मेदारियाँ लागू होती हैं?",
+        "कौन सा कार्यालय, वेबसाइट या हेल्पलाइन इस दस्तावेज़ की पुष्टि कर सकती है?",
+        "अगले कदम के लिए कौन से दस्तावेज़ चाहिए?",
+    ],
+    "verification_steps": [
+        "आधिकारिक URL, फोन नंबर और योजना या खाते के विवरण अलग से मिलान करें।",
+        "OTP, पासवर्ड या मूल दस्तावेज़ तब तक साझा न करें जब तक माध्यम सत्यापित न हो।",
+        "हर जमा और स्वीकृति की तारीख सहित प्रतियाँ या स्क्रीनशॉट रखें।",
+    ],
+    "disclaimer": "यह केवल शैक्षिक मार्गदर्शन है। विवरण दस्तावेज़ जारीकर्ता या आधिकारिक स्रोत से सत्यापित करें।",
+}
+
 
 ACTION_PLAN_PROMPT = """You are JanMitra AI helping an Indian citizen understand next steps for a
 financial, legal, or government-service document. Use ONLY the document content. Do not invent
@@ -271,14 +322,14 @@ Return ONLY valid JSON:
 Keep each item short and plain-language."""
 
 
-def generate_action_plan(raw_text: str) -> dict[str, Any]:
+def generate_action_plan(raw_text: str, language: str | None = None) -> dict[str, Any]:
     if not raw_text.strip() or not is_configured():
-        return ACTION_PLAN_FALLBACK
-    prompt = f"{ACTION_PLAN_PROMPT}\n\n=== DOCUMENT CONTENT ===\n{raw_text}"
+        return ACTION_PLAN_FALLBACK_HI if (language or "").lower() in {"hi", "hindi"} else ACTION_PLAN_FALLBACK
+    prompt = f"{ACTION_PLAN_PROMPT}\n\n{_language_instruction(language)}\n\n=== DOCUMENT CONTENT ===\n{raw_text}"
     response = _generate([prompt], json_mode=True)
     result = _extract_json(response.text or "{}")
     if not any(result.get(key) for key in ("immediate_actions", "documents_to_collect", "deadlines")):
-        return ACTION_PLAN_FALLBACK
+        return ACTION_PLAN_FALLBACK_HI if (language or "").lower() in {"hi", "hindi"} else ACTION_PLAN_FALLBACK
     return result
 
 
@@ -293,12 +344,14 @@ def match_schemes(
         if value:
             profile_lines.append(f"- {key.replace('_', ' ').title()}: {value}")
     profile = "\n".join(profile_lines) or "No additional eligibility details provided."
+    language_instruction = _language_instruction((eligibility or {}).get("language"))
     prompt = (
         "You are JanMitra AI. Using the document content and conversation context, suggest which "
         "government schemes from the CATALOG may be relevant. Use the optional citizen eligibility "
         "profile to rank better matches, but do not invent eligibility. Only suggest from the catalog. "
         "For each, explain briefly why it may be relevant. Always include the disclaimer that "
-        "eligibility must be verified through official sources.\n\n"
+        "eligibility must be verified through official sources. "
+        f"{language_instruction}\n\n"
         "Return ONLY valid JSON: {\"suggestions\": [{\"name\": \"...\", \"reason\": \"...\", "
         "\"official_url\": \"...\", \"confidence\": 0.0, \"eligibility_notes\": \"...\", "
         "\"required_documents\": [\"...\"]}], "

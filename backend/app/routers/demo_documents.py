@@ -16,10 +16,10 @@ def list_demo_documents() -> DemoDocumentList:
 
 
 @router.post("/{sample_id}", response_model=DemoDocumentLoadResponse)
-def load_demo_document(sample_id: str) -> DemoDocumentLoadResponse:
+def load_demo_document(sample_id: str, language: str | None = None) -> DemoDocumentLoadResponse:
     conn = get_connection()
     try:
-        document, analysis = sample_documents.load_sample(conn, sample_id)
+        document, analysis = sample_documents.load_sample(conn, sample_id, language)
     finally:
         conn.close()
     return DemoDocumentLoadResponse(document=document, analysis=analysis)

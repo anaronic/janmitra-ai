@@ -91,7 +91,7 @@ def _build_analysis(document_id: str, extraction: dict) -> DocumentAnalysis:
 
 
 @router.post("/{document_id}/analyze", response_model=DocumentAnalysis)
-def analyze_document(document_id: str) -> DocumentAnalysis:
+def analyze_document(document_id: str, language: str | None = None) -> DocumentAnalysis:
     conn = get_connection()
     try:
         row = conn.execute(
@@ -102,7 +102,7 @@ def analyze_document(document_id: str) -> DocumentAnalysis:
             raise HTTPException(status_code=404, detail="Document not found.")
 
         file_bytes = Path(row["stored_path"]).read_bytes()
-        extraction = gemini.analyze_document(file_bytes, row["content_type"] or "application/pdf")
+        extraction = gemini.analyze_document(file_bytes, row["content_type"] or "application/pdf", language)
         analysis = _build_analysis(document_id, extraction)
 
         conn.execute(

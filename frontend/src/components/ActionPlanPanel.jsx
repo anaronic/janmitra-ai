@@ -15,52 +15,63 @@ function PlanGroup({ title, items, empty }) {
   );
 }
 
-export default function ActionPlanPanel({ plan, loading, error, onRetry }) {
+export default function ActionPlanPanel({ plan, loading, error, language, onRetry }) {
+  const hi = language === "hi";
   return (
     <section id="action-plan" className="panel">
       <div className="panel-head">
-        <h3>Citizen Action Plan</h3>
+        <h3>{hi ? "नागरिक कार्य योजना" : "Citizen Action Plan"}</h3>
         {error && (
           <button type="button" className="ghost small-btn" onClick={onRetry}>
-            Retry
+            {hi ? "फिर कोशिश करें" : "Retry"}
           </button>
         )}
       </div>
-      {loading && <p className="muted">Preparing practical next steps…</p>}
+      {loading && <p className="muted">{hi ? "व्यावहारिक अगले कदम तैयार हो रहे हैं…" : "Preparing practical next steps…"}</p>}
       {error && (
         <div className="error-box">
-          <strong>Action plan unavailable.</strong>
+          <strong>{hi ? "कार्य योजना उपलब्ध नहीं है।" : "Action plan unavailable."}</strong>
           <p>{error}</p>
-          <p className="muted">If the backend is waking up, wait 30 seconds and retry.</p>
+          <p className="muted">
+            {hi
+              ? "अगर backend शुरू हो रहा है, 30 सेकंड रुककर फिर कोशिश करें।"
+              : "If the backend is waking up, wait 30 seconds and retry."}
+          </p>
         </div>
       )}
       {!loading && !error && plan && (
         <>
           <PlanGroup
-            title="Do first"
+            title={hi ? "पहले यह करें" : "Do first"}
             items={plan.immediate_actions}
-            empty="No immediate action was identified."
+            empty={hi ? "कोई तत्काल कदम नहीं मिला।" : "No immediate action was identified."}
           />
           <PlanGroup
-            title="Documents to collect"
+            title={hi ? "इकट्ठा करने वाले दस्तावेज़" : "Documents to collect"}
             items={plan.documents_to_collect}
-            empty="No extra documents listed."
+            empty={hi ? "कोई अतिरिक्त दस्तावेज़ सूचीबद्ध नहीं है।" : "No extra documents listed."}
           />
-          <PlanGroup title="Deadlines" items={plan.deadlines} empty="No deadlines extracted." />
           <PlanGroup
-            title="Questions to ask"
+            title={hi ? "समयसीमाएँ" : "Deadlines"}
+            items={plan.deadlines}
+            empty={hi ? "कोई समयसीमा नहीं मिली।" : "No deadlines extracted."}
+          />
+          <PlanGroup
+            title={hi ? "पूछने योग्य प्रश्न" : "Questions to ask"}
             items={plan.questions_to_ask}
-            empty="No questions suggested."
+            empty={hi ? "कोई प्रश्न सुझाया नहीं गया।" : "No questions suggested."}
           />
           <PlanGroup
-            title="Verify before acting"
+            title={hi ? "कार्रवाई से पहले सत्यापित करें" : "Verify before acting"}
             items={plan.verification_steps}
-            empty="Verify with the issuing office or official portal."
+            empty={hi ? "जारी करने वाले कार्यालय या आधिकारिक पोर्टल से सत्यापित करें।" : "Verify with the issuing office or official portal."}
           />
           {plan.disclaimer && <p className="disclaimer">{plan.disclaimer}</p>}
         </>
       )}
-      {!loading && !error && !plan && <p className="muted">Action plan will appear here.</p>}
+      {!loading && !error && !plan && (
+        <p className="muted">{hi ? "कार्य योजना यहाँ दिखाई देगी।" : "Action plan will appear here."}</p>
+      )}
     </section>
   );
 }

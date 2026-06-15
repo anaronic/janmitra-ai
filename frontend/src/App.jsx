@@ -13,17 +13,28 @@ import "./App.css";
 
 const FONT_STEPS = [0.9, 1, 1.1];
 const LANGUAGES = [
-  { value: "en", label: "English" },
-  { value: "hi", label: "हिन्दी" },
+  { value: "en", label: "English", nativeName: "English" },
+  { value: "hi", label: "Hindi", nativeName: "हिन्दी" },
 ];
-const SECTIONS = [
-  { id: "snapshot", label: "Snapshot" },
-  { id: "action-plan", label: "Action Plan" },
-  { id: "risks", label: "Risks" },
-  { id: "rights", label: "Rights" },
-  { id: "schemes", label: "Schemes" },
-  { id: "chat", label: "Ask Doc" },
-];
+const SECTION_LABELS = {
+  en: {
+    snapshot: "Snapshot",
+    "action-plan": "Action Plan",
+    risks: "Risks",
+    rights: "Rights",
+    schemes: "Schemes",
+    chat: "Ask Doc",
+  },
+  hi: {
+    snapshot: "सारांश",
+    "action-plan": "कार्य योजना",
+    risks: "जोखिम",
+    rights: "अधिकार",
+    schemes: "योजनाएँ",
+    chat: "प्रश्न पूछें",
+  },
+};
+const SECTIONS = ["snapshot", "action-plan", "risks", "rights", "schemes", "chat"];
 
 function actionableError(message) {
   const text = message || "Request failed.";
@@ -49,6 +60,7 @@ function App() {
   const [fontStep, setFontStep] = useState(1);
   const [language, setLanguage] = useState("en");
   const [activeSection, setActiveSection] = useState("snapshot");
+  const sectionLabels = SECTION_LABELS[language] || SECTION_LABELS.en;
 
   useEffect(() => {
     document.documentElement.style.fontSize = `${FONT_STEPS[fontStep] * 100}%`;
@@ -72,25 +84,25 @@ function App() {
   const loadRisk = useCallback(
     (documentId = doc?.id) => {
       if (!documentId) return Promise.resolve();
-      return loadInsight("risk", () => getRisk(documentId), setRisk);
+      return loadInsight("risk", () => getRisk(documentId, { language }), setRisk);
     },
-    [doc?.id, loadInsight],
+    [doc?.id, language, loadInsight],
   );
 
   const loadRights = useCallback(
     (documentId = doc?.id) => {
       if (!documentId) return Promise.resolve();
-      return loadInsight("rights", () => getRights(documentId), setRights);
+      return loadInsight("rights", () => getRights(documentId, { language }), setRights);
     },
-    [doc?.id, loadInsight],
+    [doc?.id, language, loadInsight],
   );
 
   const loadActionPlan = useCallback(
     (documentId = doc?.id) => {
       if (!documentId) return Promise.resolve();
-      return loadInsight("actionPlan", () => getActionPlan(documentId), setActionPlan);
+      return loadInsight("actionPlan", () => getActionPlan(documentId, { language }), setActionPlan);
     },
-    [doc?.id, loadInsight],
+    [doc?.id, language, loadInsight],
   );
 
   const fetchSchemes = useCallback(
@@ -112,6 +124,10 @@ function App() {
 
   useEffect(() => {
     if (!doc) return;
+    setRisk(null);
+    setRights(null);
+    setActionPlan(null);
+    setSchemes(null);
     loadRisk(doc.id);
     loadRights(doc.id);
     loadActionPlan(doc.id);
@@ -186,7 +202,7 @@ function App() {
               <select value={language} onChange={(e) => setLanguage(e.target.value)}>
                 {LANGUAGES.map((item) => (
                   <option key={item.value} value={item.value}>
-                    {item.label}
+                    {item.nativeName}
                   </option>
                 ))}
               </select>
@@ -227,11 +243,11 @@ function App() {
               {SECTIONS.slice(1).map((section) => (
                 <button
                   type="button"
-                  key={section.id}
-                  className={`nav-item nav-button ${activeSection === section.id ? "active" : ""}`}
-                  onClick={() => setActiveSection(section.id)}
+                  key={section}
+                  className={`nav-item nav-button ${activeSection === section ? "active" : ""}`}
+                  onClick={() => setActiveSection(section)}
                 >
-                  {section.label}
+                  {sectionLabels[section]}
                 </button>
               ))}
             </>
@@ -261,7 +277,7 @@ function App() {
         {!doc ? (
           <>
             <GuidedJourney />
-            <Upload onReady={handleReady} language={language} />
+            <Upload onReady={handleReady} language={language} languages={LANGUAGES} />
           </>
         ) : (
           <section id="document-analysis" className="workspace">
@@ -283,25 +299,26 @@ function App() {
                   {SECTIONS.map((section) => (
                     <button
                       type="button"
-                      key={section.id}
+                      key={section}
                       role="tab"
-                      aria-selected={activeSection === section.id}
-                      className={activeSection === section.id ? "active" : ""}
-                      onClick={() => setActiveSection(section.id)}
+                      aria-selected={activeSection === section}
+                      className={activeSection === section ? "active" : ""}
+                      onClick={() => setActiveSection(section)}
                     >
-                      {section.label}
+                      {sectionLabels[section]}
                     </button>
                   ))}
                 </div>
 
                 <div className="section-pane" hidden={activeSection !== "snapshot"}>
-                  <DocumentSnapshot analysis={analysis} />
+                  <DocumentSnapshot analysis={analysis} language={language} />
                 </div>
                 <div className="section-pane" hidden={activeSection !== "action-plan"}>
                   <ActionPlanPanel
                     plan={actionPlan}
                     loading={loading.actionPlan}
                     error={errors.actionPlan}
+                    language={language}
                     onRetry={() => loadActionPlan()}
                   />
                 </div>
@@ -310,6 +327,7 @@ function App() {
                     report={risk}
                     loading={loading.risk}
                     error={errors.risk}
+                    language={language}
                     onRetry={() => loadRisk()}
                   />
                 </div>
@@ -318,6 +336,7 @@ function App() {
                     report={rights}
                     loading={loading.rights}
                     error={errors.rights}
+                    language={language}
                     onRetry={() => loadRights()}
                   />
                 </div>
@@ -332,7 +351,7 @@ function App() {
                   />
                 </div>
                 <div id="chat" className="section-pane chat-area" hidden={activeSection !== "chat"}>
-                  <Chat documentId={doc.id} language={language} />
+                  <Chat key={`${doc.id}-${language}`} documentId={doc.id} language={language} />
                 </div>
               </div>
             </div>

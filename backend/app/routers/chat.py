@@ -38,6 +38,7 @@ def chat(document_id: str, payload: ChatRequest) -> ChatResponse:
             message=payload.message,
             education_level=payload.education_level,
             history=history,
+            preferred_language=payload.language,
         )
 
         reply = result.get("reply", "") or ""

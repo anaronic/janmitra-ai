@@ -53,32 +53,32 @@ export function uploadDocument(file) {
   return request("/api/documents", { method: "POST", body: form });
 }
 
-export function analyzeDocument(id) {
-  return request(`/api/documents/${id}/analyze`, { method: "POST" });
+export function analyzeDocument(id, params = {}) {
+  return request(`/api/documents/${id}/analyze${toQuery(params)}`, { method: "POST" });
 }
 
 export function getDemoDocuments() {
   return request("/api/demo-documents");
 }
 
-export function analyzeDemoDocument(sampleId) {
-  return request(`/api/demo-documents/${sampleId}`, { method: "POST" });
+export function analyzeDemoDocument(sampleId, params = {}) {
+  return request(`/api/demo-documents/${sampleId}${toQuery(params)}`, { method: "POST" });
 }
 
-export function getRisk(id) {
-  return request(`/api/documents/${id}/risk`);
+export function getRisk(id, params = {}) {
+  return request(`/api/documents/${id}/risk${toQuery(params)}`);
 }
 
-export function getRights(id) {
-  return request(`/api/documents/${id}/rights`);
+export function getRights(id, params = {}) {
+  return request(`/api/documents/${id}/rights${toQuery(params)}`);
 }
 
-export function getSuggestedQuestions(id) {
-  return request(`/api/documents/${id}/suggested-questions`);
+export function getSuggestedQuestions(id, params = {}) {
+  return request(`/api/documents/${id}/suggested-questions${toQuery(params)}`);
 }
 
-export function getActionPlan(id) {
-  return request(`/api/documents/${id}/action-plan`);
+export function getActionPlan(id, params = {}) {
+  return request(`/api/documents/${id}/action-plan${toQuery(params)}`);
 }
 
 export function getSchemes(id, params = {}) {

@@ -12,7 +12,7 @@ function friendlyError(message) {
   return text;
 }
 
-export default function Upload({ onReady, language }) {
+export default function Upload({ onReady, language, languages }) {
   const inputRef = useRef(null);
   const [busy, setBusy] = useState(false);
   const [sampleBusy, setSampleBusy] = useState("");
@@ -26,7 +26,7 @@ export default function Upload({ onReady, language }) {
     setBusy(true);
     try {
       const doc = await uploadDocument(file);
-      const analysis = await analyzeDocument(doc.id);
+      const analysis = await analyzeDocument(doc.id, { language });
       onReady(doc, analysis);
     } catch (err) {
       setError(friendlyError(err.message));
@@ -50,7 +50,7 @@ export default function Upload({ onReady, language }) {
     setError("");
     setSampleBusy(sampleId);
     try {
-      const res = await analyzeDemoDocument(sampleId);
+      const res = await analyzeDemoDocument(sampleId, { language });
       onReady(res.document, res.analysis);
     } catch (err) {
       setError(friendlyError(err.message));
@@ -62,7 +62,15 @@ export default function Upload({ onReady, language }) {
   return (
     <div id="document-analysis" className="upload-card">
       <h2>{language === "hi" ? "दस्तावेज़ अपलोड करें" : "Upload a document"}</h2>
-      <p className="muted">PDF, image, or scanned document (max 20 MB). No secrets required.</p>
+      <p className="muted">
+        {language === "hi"
+          ? "PDF, छवि या स्कैन दस्तावेज़ (अधिकतम 20 MB)। कोई गुप्त जानकारी आवश्यक नहीं।"
+          : "PDF, image, or scanned document (max 20 MB). No secrets required."}
+      </p>
+      <p className="supported-languages">
+        {language === "hi" ? "समर्थित भाषाएँ" : "Supported languages"}:{" "}
+        {(languages || []).map((item) => item.nativeName || item.label).join(" · ")}
+      </p>
       <input
         ref={inputRef}
         type="file"
@@ -70,30 +78,44 @@ export default function Upload({ onReady, language }) {
         disabled={busy}
         onChange={(e) => handleFile(e.target.files?.[0])}
       />
-      {busy && <p className="muted">Uploading and analyzing… this can take a few seconds.</p>}
+      {busy && (
+        <p className="muted">
+          {language === "hi"
+            ? "अपलोड और विश्लेषण हो रहा है… इसमें कुछ सेकंड लग सकते हैं।"
+            : "Uploading and analyzing… this can take a few seconds."}
+        </p>
+      )}
       {error && (
         <div className="error-box">
-          <strong>Could not complete that step.</strong>
+          <strong>{language === "hi" ? "यह चरण पूरा नहीं हो सका।" : "Could not complete that step."}</strong>
           <p>{error}</p>
           <button type="button" className="ghost" onClick={() => inputRef.current?.click()}>
-            Choose file again
+            {language === "hi" ? "फाइल फिर चुनें" : "Choose file again"}
           </button>
         </div>
       )}
 
       <div className="sample-mode">
         <div>
-          <h3>Judge demo mode</h3>
-          <p className="muted">Try JanMitra instantly with sample notices, bills, or certificates.</p>
+          <h3>{language === "hi" ? "डेमो मोड" : "Judge demo mode"}</h3>
+          <p className="muted">
+            {language === "hi"
+              ? "सैंपल दस्तावेज़ से JanMitra तुरंत आज़माएँ।"
+              : "Try JanMitra instantly with sample notices, bills, or certificates."}
+          </p>
         </div>
         {!samplesLoaded ? (
           <button type="button" className="ghost" onClick={loadSamples} disabled={busy}>
-            Show sample documents
+            {language === "hi" ? "सैंपल दस्तावेज़ दिखाएँ" : "Show sample documents"}
           </button>
         ) : (
           <div className="sample-grid">
             {samples.length === 0 ? (
-              <p className="muted">No samples are available yet. Please upload a file.</p>
+              <p className="muted">
+                {language === "hi"
+                  ? "अभी कोई सैंपल उपलब्ध नहीं है। कृपया फाइल अपलोड करें।"
+                  : "No samples are available yet. Please upload a file."}
+              </p>
             ) : (
               samples.map((sample) => (
                 <button
@@ -108,7 +130,7 @@ export default function Upload({ onReady, language }) {
                   <small>
                     {sample.document_type} · {sample.language}
                   </small>
-                  {sampleBusy === sample.id && <em>Loading…</em>}
+                  {sampleBusy === sample.id && <em>{language === "hi" ? "लोड हो रहा है…" : "Loading…"}</em>}
                 </button>
               ))
             )}

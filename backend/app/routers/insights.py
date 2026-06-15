@@ -30,27 +30,27 @@ def _context_or_404(document_id: str) -> str:
 
 
 @router.get("/risk", response_model=RiskReport)
-def risk(document_id: str) -> RiskReport:
+def risk(document_id: str, language: str | None = None) -> RiskReport:
     context = _context_or_404(document_id)
-    return RiskReport(**_clean(gemini.extract_risks(context), RiskReport))
+    return RiskReport(**_clean(gemini.extract_risks(context, language), RiskReport))
 
 
 @router.get("/rights", response_model=RightsReport)
-def rights(document_id: str) -> RightsReport:
+def rights(document_id: str, language: str | None = None) -> RightsReport:
     context = _context_or_404(document_id)
-    return RightsReport(**_clean(gemini.extract_rights(context), RightsReport))
+    return RightsReport(**_clean(gemini.extract_rights(context, language), RightsReport))
 
 
 @router.get("/action-plan", response_model=ActionPlan)
-def action_plan(document_id: str) -> ActionPlan:
+def action_plan(document_id: str, language: str | None = None) -> ActionPlan:
     context = _context_or_404(document_id)
-    return ActionPlan(**_clean(gemini.generate_action_plan(context), ActionPlan))
+    return ActionPlan(**_clean(gemini.generate_action_plan(context, language), ActionPlan))
 
 
 @router.get("/suggested-questions", response_model=SuggestedQuestions)
-def suggested_questions(document_id: str) -> SuggestedQuestions:
+def suggested_questions(document_id: str, language: str | None = None) -> SuggestedQuestions:
     context = _context_or_404(document_id)
-    return SuggestedQuestions(**_clean(gemini.suggest_questions(context), SuggestedQuestions))
+    return SuggestedQuestions(**_clean(gemini.suggest_questions(context, language), SuggestedQuestions))
 
 
 @router.get("/schemes", response_model=SchemeReport)
