@@ -1,16 +1,39 @@
-# React + Vite
+# JanMitra AI Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React + Vite client for JanMitra AI, a multilingual financial and legal literacy assistant for Indian citizens.
 
-Currently, two official plugins are available:
+## Local Development
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+```powershell
+npm install
+npm run dev
+```
 
-## React Compiler
+The dev server runs at `http://localhost:5173` and talks to the backend at `http://localhost:8000` by default.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+To point the frontend at a different backend, create `frontend/.env.local`:
 
-## Expanding the ESLint configuration
+```text
+VITE_API_BASE_URL=https://your-backend.example.com
+```
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+Vite reads environment variables at build time, so redeploy or rebuild after changing `VITE_API_BASE_URL`.
+
+## Scripts
+
+| Command | Purpose |
+| --- | --- |
+| `npm run dev` | Start the local Vite dev server. |
+| `npm run build` | Create the production build in `dist/`. |
+| `npm run lint` | Run ESLint across the frontend source. |
+| `npm run preview` | Preview the production build locally. |
+
+## Deployment
+
+Deploy this directory as the Vercel project root and set:
+
+```text
+VITE_API_BASE_URL=https://<your-backend-host>
+```
+
+After deployment, configure the backend `CORS_ORIGINS` environment variable with the Vercel frontend URL so browser requests are allowed.
