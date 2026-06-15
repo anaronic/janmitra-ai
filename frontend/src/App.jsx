@@ -1,14 +1,32 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import ActionPlanPanel from "./components/ActionPlanPanel";
 import Chat from "./components/Chat";
+import DocumentSnapshot from "./components/DocumentSnapshot";
+import GuidedJourney from "./components/GuidedJourney";
 import RightsPanel from "./components/RightsPanel";
 import RiskDashboard from "./components/RiskDashboard";
 import SchemesPanel from "./components/SchemesPanel";
 import Upload from "./components/Upload";
 import AshokaChakra from "./components/AshokaChakra";
-import { getRights, getRisk, getSchemes } from "./api";
+import { getActionPlan, getRights, getRisk, getSchemes } from "./api";
 import "./App.css";
 
 const FONT_STEPS = [0.9, 1, 1.1];
+const LANGUAGES = [
+  { value: "en", label: "English" },
+  { value: "hi", label: "हिन्दी" },
+];
+
+function actionableError(message) {
+  const text = message || "Request failed.";
+  if (/quota|rate|limit|429/i.test(text)) {
+    return `${text} This can happen during demos; retry after a minute.`;
+  }
+  if (/cannot reach|failed to fetch|server|backend|cors|sleep/i.test(text)) {
+    return `${text} The backend may be waking from cold start. Retry in about 30 seconds.`;
+  }
+  return text;
+}
 
 function App() {
   const [doc, setDoc] = useState(null);
@@ -16,23 +34,80 @@ function App() {
   const [risk, setRisk] = useState(null);
   const [rights, setRights] = useState(null);
   const [schemes, setSchemes] = useState(null);
-  const [loadingInsights, setLoadingInsights] = useState(false);
+  const [actionPlan, setActionPlan] = useState(null);
+  const [loading, setLoading] = useState({});
+  const [errors, setErrors] = useState({});
+  const [schemeParams, setSchemeParams] = useState({});
   const [fontStep, setFontStep] = useState(1);
+  const [language, setLanguage] = useState("en");
 
   useEffect(() => {
     document.documentElement.style.fontSize = `${FONT_STEPS[fontStep] * 100}%`;
   }, [fontStep]);
 
+  const loadInsight = useCallback(
+    async (key, loader, setter) => {
+      setLoading((current) => ({ ...current, [key]: true }));
+      setErrors((current) => ({ ...current, [key]: "" }));
+      try {
+        setter(await loader());
+      } catch (err) {
+        setErrors((current) => ({ ...current, [key]: actionableError(err.message) }));
+      } finally {
+        setLoading((current) => ({ ...current, [key]: false }));
+      }
+    },
+    [],
+  );
+
+  const loadRisk = useCallback(
+    (documentId = doc?.id) => {
+      if (!documentId) return Promise.resolve();
+      return loadInsight("risk", () => getRisk(documentId), setRisk);
+    },
+    [doc?.id, loadInsight],
+  );
+
+  const loadRights = useCallback(
+    (documentId = doc?.id) => {
+      if (!documentId) return Promise.resolve();
+      return loadInsight("rights", () => getRights(documentId), setRights);
+    },
+    [doc?.id, loadInsight],
+  );
+
+  const loadActionPlan = useCallback(
+    (documentId = doc?.id) => {
+      if (!documentId) return Promise.resolve();
+      return loadInsight("actionPlan", () => getActionPlan(documentId), setActionPlan);
+    },
+    [doc?.id, loadInsight],
+  );
+
+  const fetchSchemes = useCallback(
+    (documentId, params) => {
+      setSchemeParams(params);
+      return loadInsight("schemes", () => getSchemes(documentId, params), setSchemes);
+    },
+    [loadInsight],
+  );
+
+  const loadSchemes = useCallback(
+    (params = schemeParams) => {
+      if (!doc) return Promise.resolve();
+      const nextParams = { ...params, language };
+      return fetchSchemes(doc.id, nextParams);
+    },
+    [doc, fetchSchemes, language, schemeParams],
+  );
+
   useEffect(() => {
     if (!doc) return;
-    Promise.allSettled([getRisk(doc.id), getRights(doc.id), getSchemes(doc.id)])
-      .then(([r, ri, s]) => {
-        if (r.status === "fulfilled") setRisk(r.value);
-        if (ri.status === "fulfilled") setRights(ri.value);
-        if (s.status === "fulfilled") setSchemes(s.value);
-      })
-      .finally(() => setLoadingInsights(false));
-  }, [doc]);
+    loadRisk(doc.id);
+    loadRights(doc.id);
+    loadActionPlan(doc.id);
+    fetchSchemes(doc.id, { language });
+  }, [doc, fetchSchemes, language, loadActionPlan, loadRights, loadRisk]);
 
   function handleReady(document, analysisResult) {
     setDoc(document);
@@ -40,13 +115,21 @@ function App() {
     setRisk(null);
     setRights(null);
     setSchemes(null);
-    setLoadingInsights(true);
+    setActionPlan(null);
+    setErrors({});
+    setLoading({});
+    setSchemeParams({ language });
   }
 
   function reset() {
     setDoc(null);
     setAnalysis(null);
-    setLoadingInsights(false);
+    setRisk(null);
+    setRights(null);
+    setSchemes(null);
+    setActionPlan(null);
+    setLoading({});
+    setErrors({});
   }
 
   return (
@@ -87,7 +170,16 @@ function App() {
                 A+
               </button>
             </span>
-            <span className="utility-lang">English | हिन्दी</span>
+            <label className="language-select">
+              <span>Language</span>
+              <select value={language} onChange={(e) => setLanguage(e.target.value)}>
+                {LANGUAGES.map((item) => (
+                  <option key={item.value} value={item.value}>
+                    {item.label}
+                  </option>
+                ))}
+              </select>
+            </label>
           </div>
         </div>
       </div>
@@ -121,20 +213,32 @@ function App() {
           </a>
           {doc ? (
             <>
+              <a className="nav-item" href="#action-plan">
+                Action Plan
+              </a>
+              <a className="nav-item" href="#risks">
+                Risks
+              </a>
               <a className="nav-item" href="#rights">
                 Rights
               </a>
               <a className="nav-item" href="#schemes">
                 Schemes
               </a>
+              <a className="nav-item" href="#chat">
+                Chat
+              </a>
             </>
           ) : (
             <>
-              <span className="nav-item disabled" aria-disabled="true">
-                Rights
+              <span className="nav-item locked" aria-disabled="true" title="Upload a document first">
+                🔒 Action Plan
               </span>
-              <span className="nav-item disabled" aria-disabled="true">
-                Schemes
+              <span className="nav-item locked" aria-disabled="true" title="Upload a document first">
+                🔒 Rights
+              </span>
+              <span className="nav-item locked" aria-disabled="true" title="Upload a document first">
+                🔒 Schemes
               </span>
             </>
           )}
@@ -143,16 +247,21 @@ function App() {
 
       <main id="main-content" className="gov-main">
         <p className="page-intro">
-          Understand your documents, rights, risks, and government schemes — in your language.
+          {language === "hi"
+            ? "अपने दस्तावेज़, अधिकार, जोखिम और सरकारी योजनाएँ सरल भाषा में समझें।"
+            : "Understand your documents, rights, risks, and government schemes — in your language."}
         </p>
 
         {!doc ? (
-          <Upload onReady={handleReady} />
+          <>
+            <GuidedJourney />
+            <Upload onReady={handleReady} language={language} />
+          </>
         ) : (
           <section id="document-analysis" className="workspace">
             <div className="doc-bar">
               <div>
-                <strong>{doc.filename}</strong>
+                <strong>{doc.filename || doc.title || "Uploaded document"}</strong>
                 {analysis?.document_type && (
                   <span className="muted"> · {analysis.document_type}</span>
                 )}
@@ -162,16 +271,40 @@ function App() {
               </button>
             </div>
 
-            {loadingInsights && <p className="muted">Generating insights…</p>}
-
             <div className="grid">
               <div className="column">
-                <RiskDashboard report={risk} />
-                <RightsPanel report={rights} />
-                <SchemesPanel report={schemes} />
+                <DocumentSnapshot analysis={analysis} />
+                <ActionPlanPanel
+                  plan={actionPlan}
+                  loading={loading.actionPlan}
+                  error={errors.actionPlan}
+                  onRetry={() => loadActionPlan()}
+                />
+                <RiskDashboard
+                  report={risk}
+                  loading={loading.risk}
+                  error={errors.risk}
+                  onRetry={() => loadRisk()}
+                />
+                <RightsPanel
+                  report={rights}
+                  loading={loading.rights}
+                  error={errors.rights}
+                  onRetry={() => loadRights()}
+                />
+                <SchemesPanel
+                  report={schemes}
+                  loading={loading.schemes}
+                  error={errors.schemes}
+                  language={language}
+                  onApply={loadSchemes}
+                  onRetry={() => loadSchemes(schemeParams)}
+                />
               </div>
               <div className="column">
-                <Chat documentId={doc.id} />
+                <div id="chat">
+                  <Chat documentId={doc.id} language={language} />
+                </div>
               </div>
             </div>
           </section>

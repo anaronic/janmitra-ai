@@ -5,6 +5,7 @@ from fastapi import APIRouter, HTTPException
 
 from app.database import get_connection
 from app.models import (
+    ActionPlan,
     RightsReport,
     RiskReport,
     SchemeReport,
@@ -40,6 +41,12 @@ def rights(document_id: str) -> RightsReport:
     return RightsReport(**_clean(gemini.extract_rights(context), RightsReport))
 
 
+@router.get("/action-plan", response_model=ActionPlan)
+def action_plan(document_id: str) -> ActionPlan:
+    context = _context_or_404(document_id)
+    return ActionPlan(**_clean(gemini.generate_action_plan(context), ActionPlan))
+
+
 @router.get("/suggested-questions", response_model=SuggestedQuestions)
 def suggested_questions(document_id: str) -> SuggestedQuestions:
     context = _context_or_404(document_id)
@@ -47,9 +54,35 @@ def suggested_questions(document_id: str) -> SuggestedQuestions:
 
 
 @router.get("/schemes", response_model=SchemeReport)
-def schemes(document_id: str, query: str | None = None) -> SchemeReport:
+def schemes(
+    document_id: str,
+    query: str | None = None,
+    state: str | None = None,
+    age: str | None = None,
+    occupation: str | None = None,
+    income_band: str | None = None,
+    category: str | None = None,
+    residence: str | None = None,
+    gender: str | None = None,
+    language: str | None = None,
+) -> SchemeReport:
     context = _context_or_404(document_id)
-    result = gemini.match_schemes(context, schemes_kb.scheme_catalog_text(), query)
+    eligibility = {
+        "state": state,
+        "age": age,
+        "occupation": occupation,
+        "income_band": income_band,
+        "category": category,
+        "residence": residence,
+        "gender": gender,
+        "language": language,
+    }
+    result = gemini.match_schemes(
+        context,
+        schemes_kb.scheme_catalog_text(),
+        query,
+        {k: v for k, v in eligibility.items() if v},
+    )
     return SchemeReport(**_clean(result, SchemeReport))
 
 

@@ -227,15 +227,84 @@ def suggest_questions(raw_text: str) -> dict[str, Any]:
     return _extract_json(response.text or "{}")
 
 
-def match_schemes(raw_text: str, catalog: str, user_query: str | None = None) -> dict[str, Any]:
+ACTION_PLAN_FALLBACK = {
+    "immediate_actions": [
+        "Read the document end-to-end and highlight fees, dates, signatures, penalties, and cancellation terms.",
+        "Confirm the document issuer, reference number, and contact details through an official channel.",
+    ],
+    "documents_to_collect": [
+        "Government ID and address proof, if requested by the document issuer.",
+        "Copies of the signed document, payment receipts, notices, and related correspondence.",
+    ],
+    "deadlines": [
+        "Verify all dates mentioned in the document before taking action.",
+        "If a deadline is unclear, ask the issuer in writing before it expires.",
+    ],
+    "questions_to_ask": [
+        "What charges, penalties, or obligations apply to me?",
+        "Which office, website, or helpline can confirm this document?",
+        "What documents are required for the next step?",
+    ],
+    "verification_steps": [
+        "Cross-check official URLs, phone numbers, and scheme or account details independently.",
+        "Do not share OTPs, passwords, or original documents unless the channel is verified.",
+        "Keep dated copies or screenshots of every submission and acknowledgement.",
+    ],
+    "disclaimer": "This is educational guidance only. Verify details with the document issuer or an official source.",
+}
+
+
+ACTION_PLAN_PROMPT = """You are JanMitra AI helping an Indian citizen understand next steps for a
+financial, legal, or government-service document. Use ONLY the document content. Do not invent
+deadlines, required documents, offices, benefits, or eligibility. If the document is silent, use a
+conservative verification reminder instead of a specific claim.
+
+Return ONLY valid JSON:
+{
+  "immediate_actions": ["specific next steps supported by the document, or safe verification steps"],
+  "documents_to_collect": ["documents explicitly mentioned, or generic copies/ID/address proof if needed for verification"],
+  "deadlines": ["dates/time limits exactly as stated, with context; otherwise ask the issuer to confirm deadlines"],
+  "questions_to_ask": ["practical questions the citizen should ask the issuer/official helpline"],
+  "verification_steps": ["how to verify authenticity, charges, deadlines, and official contact points"],
+  "disclaimer": "This is educational guidance only. Verify details with the document issuer or an official source."
+}
+Keep each item short and plain-language."""
+
+
+def generate_action_plan(raw_text: str) -> dict[str, Any]:
+    if not raw_text.strip() or not is_configured():
+        return ACTION_PLAN_FALLBACK
+    prompt = f"{ACTION_PLAN_PROMPT}\n\n=== DOCUMENT CONTENT ===\n{raw_text}"
+    response = _generate([prompt], json_mode=True)
+    result = _extract_json(response.text or "{}")
+    if not any(result.get(key) for key in ("immediate_actions", "documents_to_collect", "deadlines")):
+        return ACTION_PLAN_FALLBACK
+    return result
+
+
+def match_schemes(
+    raw_text: str,
+    catalog: str,
+    user_query: str | None = None,
+    eligibility: dict[str, str] | None = None,
+) -> dict[str, Any]:
+    profile_lines = []
+    for key, value in (eligibility or {}).items():
+        if value:
+            profile_lines.append(f"- {key.replace('_', ' ').title()}: {value}")
+    profile = "\n".join(profile_lines) or "No additional eligibility details provided."
     prompt = (
         "You are JanMitra AI. Using the document content and conversation context, suggest which "
-        "government schemes from the CATALOG may be relevant. Only suggest from the catalog. For "
-        "each, explain briefly why it may be relevant. Always include the disclaimer that "
+        "government schemes from the CATALOG may be relevant. Use the optional citizen eligibility "
+        "profile to rank better matches, but do not invent eligibility. Only suggest from the catalog. "
+        "For each, explain briefly why it may be relevant. Always include the disclaimer that "
         "eligibility must be verified through official sources.\n\n"
         "Return ONLY valid JSON: {\"suggestions\": [{\"name\": \"...\", \"reason\": \"...\", "
-        "\"official_url\": \"...\"}], \"disclaimer\": \"Eligibility must be verified through official sources.\"}\n\n"
+        "\"official_url\": \"...\", \"confidence\": 0.0, \"eligibility_notes\": \"...\", "
+        "\"required_documents\": [\"...\"]}], "
+        "\"disclaimer\": \"Eligibility must be verified through official sources.\"}\n\n"
         f"=== CATALOG ===\n{catalog}\n\n=== DOCUMENT CONTENT ===\n{raw_text}\n\n"
+        f"=== CITIZEN ELIGIBILITY PROFILE ===\n{profile}\n\n"
         f"=== USER QUERY ===\n{user_query or 'What schemes may be relevant to me?'}"
     )
     response = _generate([prompt], json_mode=True)

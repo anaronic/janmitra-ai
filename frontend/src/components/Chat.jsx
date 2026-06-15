@@ -8,7 +8,7 @@ const LEVELS = [
   { value: "advanced", label: "Advanced" },
 ];
 
-export default function Chat({ documentId }) {
+export default function Chat({ documentId, language }) {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [level, setLevel] = useState("standard");
@@ -35,7 +35,7 @@ export default function Chat({ documentId }) {
     setMessages((m) => [...m, { role: "user", content: message, citations: [] }]);
     setBusy(true);
     try {
-      const res = await sendChat(documentId, message, level);
+      const res = await sendChat(documentId, message, level, language);
       setMessages((m) => [
         ...m,
         { role: "assistant", content: res.reply, citations: res.citations, language: res.language },
@@ -50,7 +50,7 @@ export default function Chat({ documentId }) {
   return (
     <section className="panel chat-panel">
       <div className="panel-head">
-        <h3>Ask about this document</h3>
+        <h3>{language === "hi" ? "इस दस्तावेज़ पर सवाल पूछें" : "Ask about this document"}</h3>
         <label className="level-select">
           Level:{" "}
           <select value={level} onChange={(e) => setLevel(e.target.value)}>
@@ -65,7 +65,7 @@ export default function Chat({ documentId }) {
 
       {messages.length === 0 && suggestions.length > 0 && (
         <div className="suggestions">
-          <p className="muted">Try asking:</p>
+          <p className="muted">{language === "hi" ? "पूछ कर देखें:" : "Try asking:"}</p>
           {suggestions.map((q, i) => (
             <button key={i} className="chip" onClick={() => send(q)}>
               {q}
@@ -117,11 +117,15 @@ export default function Chat({ documentId }) {
         <input
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="Type your question in any supported language…"
+          placeholder={
+            language === "hi"
+              ? "अपना प्रश्न हिंदी या किसी समर्थित भाषा में लिखें…"
+              : "Type your question in any supported language…"
+          }
           disabled={busy}
         />
         <button type="submit" disabled={busy || !input.trim()}>
-          Send
+          {language === "hi" ? "भेजें" : "Send"}
         </button>
       </form>
     </section>

@@ -113,8 +113,18 @@ a {
 .font-btn:hover:not(:disabled) {
   background: rgba(255, 255, 255, 0.15);
 }
-.utility-lang {
+.language-select {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
   font-weight: 500;
+}
+.language-select select {
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  border-radius: 6px;
+  background: var(--gov-navy-dark);
+  color: #fff;
+  padding: 0.15rem 0.4rem;
 }
 
 /* ---------- Masthead ---------- */
@@ -201,13 +211,13 @@ a {
   border-bottom-color: var(--gov-saffron);
 }
 
-.nav-item.disabled {
+.nav-item.locked {
   color: #aeb9d4;
   cursor: not-allowed;
   opacity: 0.7;
 }
 
-.nav-item.disabled:hover {
+.nav-item.locked:hover {
   color: #aeb9d4;
   border-bottom-color: transparent;
 }
@@ -249,6 +259,98 @@ a {
   box-shadow: 0 1px 3px rgba(19, 53, 123, 0.06);
 }
 
+.journey {
+  background: linear-gradient(135deg, #ffffff, #eef4ff);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 1px 3px rgba(19, 53, 123, 0.06);
+}
+.journey-head {
+  text-align: center;
+  max-width: 720px;
+  margin: 0 auto 1rem;
+}
+.journey-head h2 {
+  margin: 0.1rem 0;
+}
+.eyebrow {
+  margin: 0;
+  color: var(--gov-green);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 0.78rem;
+}
+.journey-steps {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+}
+.journey-step {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1rem;
+}
+.journey-step h3,
+.journey-step p {
+  margin: 0.2rem 0 0;
+}
+.step-pill {
+  display: inline-flex;
+  border-radius: 999px;
+  background: #fff5ec;
+  color: #914600;
+  font-weight: 700;
+  padding: 0.15rem 0.55rem;
+  font-size: 0.78rem;
+}
+.locked-preview {
+  margin-top: 1rem;
+  border: 1px dashed var(--border);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.75);
+  padding: 0.75rem 1rem;
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  color: var(--muted);
+}
+
+.sample-mode {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+.sample-mode h3 {
+  margin-bottom: 0.15rem;
+}
+.sample-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.6rem;
+}
+.sample-card {
+  text-align: left;
+  display: grid;
+  gap: 0.2rem;
+  background: #f8fbff;
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+.sample-card:hover:not(:disabled) {
+  background: #eef4ff;
+  border-color: var(--gov-navy);
+}
+.sample-card span,
+.sample-card small,
+.sample-card em {
+  color: var(--muted);
+}
+
 .doc-bar {
   display: flex;
   justify-content: space-between;
@@ -270,6 +372,9 @@ a {
 
 @media (max-width: 880px) {
   .grid {
+    grid-template-columns: 1fr;
+  }
+  .journey-steps {
     grid-template-columns: 1fr;
   }
 }
@@ -309,6 +414,11 @@ a {
   color: #fff;
 }
 
+.badge-soft {
+  background: #e8eefc;
+  color: var(--gov-navy);
+}
+
 .risk-high {
   background: var(--high);
 }
@@ -329,6 +439,13 @@ a {
   gap: 0.75rem;
 }
 
+.evidence-card {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.75rem;
+  background: #fbfcff;
+}
+
 .risk-row,
 .scheme-row {
   display: flex;
@@ -341,6 +458,99 @@ a {
   font-size: 0.8rem;
   color: var(--muted);
   margin: 0.2rem 0 0;
+}
+
+.action-line {
+  margin: 0.3rem 0;
+  color: var(--gov-navy-dark);
+  font-weight: 600;
+}
+
+.empty-state,
+.error-box {
+  border-radius: 10px;
+  padding: 0.85rem;
+  margin: 0.75rem 0;
+}
+.empty-state {
+  background: #f2fbf1;
+  border: 1px solid #cdebc7;
+}
+.error-box {
+  text-align: left;
+  background: #fff4f2;
+  border: 1px solid #f2c4bd;
+  color: var(--high);
+}
+.error-box p {
+  margin: 0.25rem 0 0.55rem;
+}
+
+.snapshot-grid,
+.rights-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+.snapshot-block,
+.rights-block,
+.plan-group {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.75rem;
+  background: #fbfcff;
+}
+.snapshot-block h4,
+.rights-block h4,
+.plan-group h4 {
+  margin: 0 0 0.35rem;
+  color: var(--gov-navy-dark);
+}
+.snapshot-block ul,
+.rights-block ul,
+.plan-group ol {
+  margin: 0;
+  padding-left: 1.25rem;
+}
+
+.plan-group {
+  margin-top: 0.75rem;
+}
+
+.scheme-form {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.65rem;
+  margin: 0.75rem 0;
+  padding: 0.75rem;
+  background: #f8fbff;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.scheme-form label {
+  display: grid;
+  gap: 0.2rem;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+.scheme-form input,
+.scheme-form select {
+  width: 100%;
+  padding: 0.45rem;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  font-family: var(--body-font);
+}
+.scheme-form button {
+  align-self: end;
+}
+
+@media (max-width: 700px) {
+  .snapshot-grid,
+  .rights-grid,
+  .scheme-form {
+    grid-template-columns: 1fr;
+  }
 }
 
 .rights-block h4 {
@@ -493,6 +703,11 @@ button.ghost {
 
 button.ghost:hover:not(:disabled) {
   background: #eef2f9;
+}
+
+.small-btn {
+  padding: 0.35rem 0.7rem;
+  font-size: 0.78rem;
 }
 
 .level-select select {

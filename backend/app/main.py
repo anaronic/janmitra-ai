@@ -9,7 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import get_settings
 from app.database import init_db
-from app.routers import chat, documents, insights
+from app.routers import chat, demo_documents, documents, insights
 
 logger = logging.getLogger("janmitra")
 
@@ -54,5 +54,6 @@ def health() -> dict[str, object]:
 
 
 app.include_router(documents.router)
+app.include_router(demo_documents.router)
 app.include_router(chat.router)
 app.include_router(insights.router)

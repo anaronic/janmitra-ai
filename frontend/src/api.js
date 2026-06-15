@@ -32,6 +32,17 @@ async function request(path, options = {}) {
   return response.json();
 }
 
+function toQuery(params = {}) {
+  const query = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && String(value).trim() !== "") {
+      query.set(key, String(value).trim());
+    }
+  });
+  const qs = query.toString();
+  return qs ? `?${qs}` : "";
+}
+
 export function getHealth() {
   return request("/health");
 }
@@ -46,6 +57,14 @@ export function analyzeDocument(id) {
   return request(`/api/documents/${id}/analyze`, { method: "POST" });
 }
 
+export function getDemoDocuments() {
+  return request("/api/demo-documents");
+}
+
+export function analyzeDemoDocument(sampleId) {
+  return request(`/api/demo-documents/${sampleId}`, { method: "POST" });
+}
+
 export function getRisk(id) {
   return request(`/api/documents/${id}/risk`);
 }
@@ -58,19 +77,23 @@ export function getSuggestedQuestions(id) {
   return request(`/api/documents/${id}/suggested-questions`);
 }
 
-export function getSchemes(id) {
-  return request(`/api/documents/${id}/schemes`);
+export function getActionPlan(id) {
+  return request(`/api/documents/${id}/action-plan`);
+}
+
+export function getSchemes(id, params = {}) {
+  return request(`/api/documents/${id}/schemes${toQuery(params)}`);
 }
 
 export function getChatHistory(id) {
   return request(`/api/documents/${id}/chat`);
 }
 
-export function sendChat(id, message, educationLevel) {
+export function sendChat(id, message, educationLevel, language) {
   return request(`/api/documents/${id}/chat`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ message, education_level: educationLevel }),
+    body: JSON.stringify({ message, education_level: educationLevel, language }),
   });
 }
 
