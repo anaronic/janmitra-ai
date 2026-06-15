@@ -119,12 +119,25 @@ function App() {
           <a className="nav-item" href="#document-analysis">
             Document Analysis
           </a>
-          <a className="nav-item" href="#rights">
-            Rights
-          </a>
-          <a className="nav-item" href="#schemes">
-            Schemes
-          </a>
+          {doc ? (
+            <>
+              <a className="nav-item" href="#rights">
+                Rights
+              </a>
+              <a className="nav-item" href="#schemes">
+                Schemes
+              </a>
+            </>
+          ) : (
+            <>
+              <span className="nav-item disabled" aria-disabled="true">
+                Rights
+              </span>
+              <span className="nav-item disabled" aria-disabled="true">
+                Schemes
+              </span>
+            </>
+          )}
         </div>
       </nav>
 

@@ -201,6 +201,17 @@ a {
   border-bottom-color: var(--gov-saffron);
 }
 
+.nav-item.disabled {
+  color: #aeb9d4;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.nav-item.disabled:hover {
+  color: #aeb9d4;
+  border-bottom-color: transparent;
+}
+
 /* ---------- Main ---------- */
 .gov-main {
   flex: 1;
