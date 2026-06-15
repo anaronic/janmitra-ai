@@ -8,9 +8,19 @@ import RiskDashboard from "./components/RiskDashboard";
 import SchemesPanel from "./components/SchemesPanel";
 import Upload from "./components/Upload";
 import AshokaChakra from "./components/AshokaChakra";
-import { analyzeDocument, getActionPlan, getRights, getRisk, getSchemes } from "./api";
+import {
+  analyzeDocument,
+  deleteDocument,
+  getActionPlan,
+  getAnalysis,
+  getDocument,
+  getRights,
+  getRisk,
+  getSchemes,
+} from "./api";
 import "./App.css";
 
+const RECENT_DOCUMENTS_KEY = "janmitra.recentDocuments";
 const FONT_STEPS = [0.9, 1, 1.1];
 const LANGUAGES = [
   { value: "en", label: "English", nativeName: "English" },
@@ -36,6 +46,64 @@ const SECTION_LABELS = {
 };
 const SECTIONS = ["snapshot", "action-plan", "risks", "rights", "schemes", "chat"];
 
+function loadRecentDocuments() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(RECENT_DOCUMENTS_KEY) || "[]");
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveRecentDocuments(items) {
+  localStorage.setItem(RECENT_DOCUMENTS_KEY, JSON.stringify(items.slice(0, 6)));
+}
+
+function listLines(items = []) {
+  if (!items?.length) return "- Not found in this document.";
+  return items.map((item) => `- ${item}`).join("\n");
+}
+
+function buildReport({ doc, analysis, risk, rights, actionPlan, schemes, language }) {
+  const hi = language === "hi";
+  const title = hi ? "JanMitra AI दस्तावेज़ रिपोर्ट" : "JanMitra AI Document Report";
+  const sections = [
+    `# ${title}`,
+    `**${hi ? "दस्तावेज़" : "Document"}:** ${doc?.filename || "Document"}`,
+    `**${hi ? "प्रकार" : "Type"}:** ${analysis?.document_type || "Unknown"}`,
+    "",
+    `## ${hi ? "सारांश" : "Snapshot"}`,
+    `**${hi ? "लोग / संस्थाएँ" : "People / entities"}**\n${listLines(analysis?.entities)}`,
+    `**${hi ? "तारीखें" : "Dates"}**\n${listLines(analysis?.dates)}`,
+    `**${hi ? "राशियाँ" : "Amounts"}**\n${listLines(analysis?.amounts)}`,
+    `**${hi ? "मुख्य शर्तें" : "Key clauses"}**\n${listLines(analysis?.clauses)}`,
+    "",
+    `## ${hi ? "कार्य योजना" : "Action Plan"}`,
+    `${listLines(actionPlan?.immediate_actions)}`,
+    `**${hi ? "दस्तावेज़" : "Documents"}**\n${listLines(actionPlan?.documents_to_collect)}`,
+    `**${hi ? "समयसीमाएँ" : "Deadlines"}**\n${listLines(actionPlan?.deadlines)}`,
+    "",
+    `## ${hi ? "जोखिम" : "Risks"}`,
+    risk?.items?.length
+      ? risk.items.map((item) => `- ${item.category} (${item.level}): ${item.explanation}`).join("\n")
+      : "- No notable risks detected.",
+    "",
+    `## ${hi ? "अधिकार और जिम्मेदारियाँ" : "Rights & Responsibilities"}`,
+    `**${hi ? "आपको क्या करना है" : "What you must do"}**\n${listLines(rights?.you_must_do)}`,
+    `**${hi ? "दूसरे पक्ष को क्या करना है" : "What the other party must do"}**\n${listLines(rights?.other_party_must_do)}`,
+    "",
+    `## ${hi ? "योजनाएँ" : "Schemes"}`,
+    schemes?.suggestions?.length
+      ? schemes.suggestions.map((scheme) => `- ${scheme.name}: ${scheme.reason || scheme.eligibility_notes || ""}`).join("\n")
+      : "- No clearly relevant schemes found.",
+    "",
+    hi
+      ? "_यह रिपोर्ट केवल शैक्षिक मार्गदर्शन है। आधिकारिक स्रोतों से सत्यापित करें।_"
+      : "_This report is educational guidance only. Verify details with official sources._",
+  ];
+  return sections.join("\n\n");
+}
+
 function actionableError(message) {
   const text = message || "Request failed.";
   if (/quota|rate|limit|429/i.test(text)) {
@@ -57,6 +125,8 @@ function App() {
   const [loading, setLoading] = useState({});
   const [errors, setErrors] = useState({});
   const [schemeParams, setSchemeParams] = useState({});
+  const [recentDocs, setRecentDocs] = useState(loadRecentDocuments);
+  const [reportStatus, setReportStatus] = useState("");
   const [fontStep, setFontStep] = useState(1);
   const [language, setLanguage] = useState("en");
   const [contentLanguage, setContentLanguage] = useState("en");
@@ -166,6 +236,20 @@ function App() {
     setSchemeParams({ language: outputLanguage });
     setContentLanguage(language);
     setActiveSection("snapshot");
+    rememberDocument(document, analysisResult, language);
+  }
+
+  function rememberDocument(document, analysisResult, documentLanguage = language) {
+    const nextItem = {
+      id: document.id,
+      filename: document.filename || document.title || "Document",
+      document_type: analysisResult?.document_type || "",
+      language: documentLanguage,
+      saved_at: new Date().toISOString(),
+    };
+    const nextItems = [nextItem, ...recentDocs.filter((item) => item.id !== document.id)].slice(0, 6);
+    setRecentDocs(nextItems);
+    saveRecentDocuments(nextItems);
   }
 
   function reset() {
@@ -179,6 +263,85 @@ function App() {
     setErrors({});
     setContentLanguage(language);
     setActiveSection("snapshot");
+  }
+
+  async function openRecentDocument(item) {
+    setErrors({});
+    setLoading((current) => ({ ...current, recent: true }));
+    const nextLanguage = item.language || language;
+    try {
+      setLanguage(nextLanguage);
+      const [document, analysisResult] = await Promise.all([
+        getDocument(item.id),
+        getAnalysis(item.id).catch(() =>
+          analyzeDocument(item.id, {
+            language: LANGUAGES.find((entry) => entry.value === nextLanguage)?.label || "English",
+          }),
+        ),
+      ]);
+      setDoc(document);
+      setAnalysis(analysisResult);
+      setRisk(null);
+      setRights(null);
+      setSchemes(null);
+      setActionPlan(null);
+      setContentLanguage(nextLanguage);
+      setActiveSection("snapshot");
+      rememberDocument(document, analysisResult, nextLanguage);
+    } catch (err) {
+      const nextItems = recentDocs.filter((recent) => recent.id !== item.id);
+      setRecentDocs(nextItems);
+      saveRecentDocuments(nextItems);
+      setErrors((current) => ({ ...current, recent: actionableError(err.message) }));
+    } finally {
+      setLoading((current) => ({ ...current, recent: false }));
+    }
+  }
+
+  async function removeDocument(item) {
+    try {
+      await deleteDocument(item.id);
+    } catch (err) {
+      if (!/not found/i.test(err.message)) {
+        setErrors((current) => ({ ...current, recent: actionableError(err.message) }));
+        return;
+      }
+    }
+    const nextItems = recentDocs.filter((recent) => recent.id !== item.id);
+    setRecentDocs(nextItems);
+    saveRecentDocuments(nextItems);
+    if (doc?.id === item.id) {
+      reset();
+    }
+  }
+
+  function currentReport() {
+    return buildReport({ doc, analysis, risk, rights, actionPlan, schemes, language });
+  }
+
+  async function copyReport() {
+    try {
+      await navigator.clipboard.writeText(currentReport());
+      setReportStatus(hi ? "रिपोर्ट कॉपी हो गई।" : "Report copied.");
+    } catch {
+      downloadReport();
+      setReportStatus(
+        hi
+          ? "क्लिपबोर्ड उपलब्ध नहीं था, इसलिए रिपोर्ट डाउनलोड कर दी गई।"
+          : "Clipboard was unavailable, so the report was downloaded.",
+      );
+    }
+  }
+
+  function downloadReport() {
+    const blob = new Blob([currentReport()], { type: "text/markdown;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${(doc?.filename || "janmitra-report").replace(/\.[^.]+$/, "")}-report.md`;
+    link.click();
+    URL.revokeObjectURL(url);
+    setReportStatus(hi ? "रिपोर्ट डाउनलोड हो गई।" : "Report downloaded.");
   }
 
   return (
@@ -305,6 +468,36 @@ function App() {
               outputLanguage={outputLanguage}
               languages={LANGUAGES}
             />
+            {recentDocs.length > 0 && (
+              <section className="panel recent-panel">
+                <div className="panel-head">
+                  <h3>{hi ? "हाल के दस्तावेज़" : "Recent documents"}</h3>
+                  {loading.recent && <span className="muted">{hi ? "खोला जा रहा है…" : "Opening…"}</span>}
+                </div>
+                {errors.recent && <p className="error">{errors.recent}</p>}
+                <div className="recent-list">
+                  {recentDocs.map((item) => (
+                    <article className="recent-card" key={item.id}>
+                      <div>
+                        <strong>{item.filename}</strong>
+                        <p className="muted">
+                          {item.document_type || (hi ? "दस्तावेज़" : "Document")} ·{" "}
+                          {new Date(item.saved_at).toLocaleString()}
+                        </p>
+                      </div>
+                      <div className="recent-actions">
+                        <button type="button" onClick={() => openRecentDocument(item)} disabled={loading.recent}>
+                          {hi ? "खोलें" : "Open"}
+                        </button>
+                        <button type="button" className="ghost" onClick={() => removeDocument(item)}>
+                          {hi ? "हटाएँ" : "Delete"}
+                        </button>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </section>
+            )}
           </>
         ) : (
           <section id="document-analysis" className="workspace">
@@ -318,7 +511,16 @@ function App() {
               <button className="ghost" onClick={reset}>
                 {hi ? "दूसरा अपलोड करें" : "Upload another"}
               </button>
+              <div className="doc-actions">
+                <button type="button" className="ghost" onClick={copyReport}>
+                  {hi ? "रिपोर्ट कॉपी करें" : "Copy report"}
+                </button>
+                <button type="button" onClick={downloadReport}>
+                  {hi ? "रिपोर्ट डाउनलोड करें" : "Download report"}
+                </button>
+              </div>
             </div>
+            {reportStatus && <p className="status-note">{reportStatus}</p>}
 
             <div className="workspace-grid">
               <div className="insights-area">

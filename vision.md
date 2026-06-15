@@ -61,3 +61,25 @@ The experience should support English and Hindi selection, simple reading levels
 - Uploaded or demo documents show a snapshot, risks, rights/responsibilities, schemes, suggested questions, chat, and action plan.
 - Scheme results can be refined using citizen profile query parameters.
 - The UI remains understandable during backend cold starts, retries, and loading states.
+
+## Expansion Roadmap
+
+The next expansion should proceed one capability at a time, prioritizing stable deployment and safe user experience over feature volume.
+
+### 1. Persistence and Sharing
+
+Users should be able to return to recent document sessions in the same browser, delete stored document data when they are done, and export a plain-language report/checklist they can save or share offline. This first phase must remain safe without user accounts: no public sharing links, no secrets, and clear reminders that data durability depends on the deployment storage.
+
+Account login belongs in the next persistence phase, once JanMitra has a managed auth provider and durable database. Auth should unlock cross-device history, saved reports, and private share links, but should not block the hackathon demo or be simulated with insecure local-only credentials.
+
+### 2. Real Multilingual Expansion
+
+After the English/Hindi foundation is stable, JanMitra should expand to more Indian languages while ensuring the selected language applies to generated content, labels, demo documents, chat, and exports. Language additions should be incremental and tested with representative sample documents.
+
+### 3. Better Scheme Intelligence
+
+Scheme matching should grow beyond the initial curated catalog into state-aware and eligibility-aware recommendations. Future work should rank schemes by likely relevance, ask only necessary profile questions, show required documents, and cite official sources.
+
+### 4. Safety, Privacy, and Compliance
+
+Before broader public use, JanMitra should harden privacy and safety: explicit delete controls, retention messaging, prompt-injection safeguards for uploaded documents, rate limits, stronger disclaimers, and clear boundaries around legal/financial advice.

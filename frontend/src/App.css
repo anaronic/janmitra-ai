@@ -383,6 +383,48 @@ a {
   border-radius: 8px;
   padding: 0.75rem 1rem;
   margin-bottom: 1rem;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.doc-actions,
+.recent-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.status-note {
+  margin: -0.35rem 0 0.9rem;
+  color: var(--gov-green);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.recent-panel {
+  max-width: 760px;
+  margin: 1rem auto 0;
+}
+
+.recent-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.recent-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.85rem;
+  background: #fbfcff;
+}
+
+.recent-card p {
+  margin: 0.2rem 0 0;
 }
 
 .grid,

@@ -14,6 +14,7 @@ JanMitra AI is a multilingual financial and legal literacy assistant for Indian 
 - **Scheme personalization:** filter scheme matches by state, age, occupation, income band, category, residence, gender, and language.
 - **English/Hindi selector:** user-controlled language experience applied across generated sections, scheme matching, sample metadata, and chat responses.
 - **Resilience UX:** state-aware navigation, loading states, retry handling, and cold-start messaging for free-tier backend hosting.
+- **Persistence and sharing MVP:** browser-local recent documents, safe delete, and offline Markdown report export/copy.
 
 ## Core Features
 
@@ -45,8 +46,11 @@ Backend API docs are available at `http://localhost:8000/docs` when running loca
 | `POST` | `/api/demo-documents/{sample_id}` | Imports/analyzes a selected demo sample as a document. |
 | `GET` | `/api/documents/{document_id}/action-plan` | Returns practical next steps for the analyzed document. |
 | `GET` | `/api/documents/{document_id}/schemes` | Returns relevant schemes; supports optional personalization query params. |
+| `DELETE` | `/api/documents/{document_id}` | Deletes the document record, related rows, and stored file when available. |
 
 Supported scheme query params: `state`, `age`, `occupation`, `income_band`, `category`, `residence`, `gender`, and `language`.
+
+Recent documents are stored only in the user's browser local storage. Backend document durability depends on the deployment storage; Render free-tier filesystem data may reset on redeploy.
 
 ## Tech Stack
 

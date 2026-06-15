@@ -29,6 +29,9 @@ async function request(path, options = {}) {
     }
     throw new Error(detail || `Request failed (${response.status})`);
   }
+  if (response.status === 204) {
+    return null;
+  }
   return response.json();
 }
 
@@ -53,8 +56,20 @@ export function uploadDocument(file) {
   return request("/api/documents", { method: "POST", body: form });
 }
 
+export function getDocument(id) {
+  return request(`/api/documents/${id}`);
+}
+
 export function analyzeDocument(id, params = {}) {
   return request(`/api/documents/${id}/analyze${toQuery(params)}`, { method: "POST" });
+}
+
+export function getAnalysis(id) {
+  return request(`/api/documents/${id}/analysis`);
+}
+
+export function deleteDocument(id) {
+  return request(`/api/documents/${id}`, { method: "DELETE" });
 }
 
 export function getDemoDocuments() {

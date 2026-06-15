@@ -77,6 +77,27 @@ def get_document(document_id: str) -> DocumentSummary:
     return DocumentSummary(**dict(row))
 
 
+@router.delete("/{document_id}", status_code=204)
+def delete_document(document_id: str) -> None:
+    conn = get_connection()
+    try:
+        row = conn.execute(
+            "SELECT stored_path FROM documents WHERE id = ?",
+            (document_id,),
+        ).fetchone()
+        if row is None:
+            raise HTTPException(status_code=404, detail="Document not found.")
+
+        conn.execute("DELETE FROM documents WHERE id = ?", (document_id,))
+        conn.commit()
+    finally:
+        conn.close()
+
+    stored_path = Path(row["stored_path"])
+    if stored_path.exists() and stored_path.is_file():
+        stored_path.unlink()
+
+
 def _build_analysis(document_id: str, extraction: dict) -> DocumentAnalysis:
     return DocumentAnalysis(
         document_id=document_id,
