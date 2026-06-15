@@ -271,8 +271,8 @@ function App() {
               </button>
             </div>
 
-            <div className="grid">
-              <div className="column">
+            <div className="workspace-grid">
+              <div className="insights-area">
                 <DocumentSnapshot analysis={analysis} />
                 <ActionPlanPanel
                   plan={actionPlan}
@@ -280,32 +280,32 @@ function App() {
                   error={errors.actionPlan}
                   onRetry={() => loadActionPlan()}
                 />
-                <RiskDashboard
-                  report={risk}
-                  loading={loading.risk}
-                  error={errors.risk}
-                  onRetry={() => loadRisk()}
-                />
-                <RightsPanel
-                  report={rights}
-                  loading={loading.rights}
-                  error={errors.rights}
-                  onRetry={() => loadRights()}
-                />
-                <SchemesPanel
-                  report={schemes}
-                  loading={loading.schemes}
-                  error={errors.schemes}
-                  language={language}
-                  onApply={loadSchemes}
-                  onRetry={() => loadSchemes(schemeParams)}
-                />
-              </div>
-              <div className="column">
-                <div id="chat">
-                  <Chat documentId={doc.id} language={language} />
+                <div className="insight-cards">
+                  <RiskDashboard
+                    report={risk}
+                    loading={loading.risk}
+                    error={errors.risk}
+                    onRetry={() => loadRisk()}
+                  />
+                  <RightsPanel
+                    report={rights}
+                    loading={loading.rights}
+                    error={errors.rights}
+                    onRetry={() => loadRights()}
+                  />
+                  <SchemesPanel
+                    report={schemes}
+                    loading={loading.schemes}
+                    error={errors.schemes}
+                    language={language}
+                    onApply={loadSchemes}
+                    onRetry={() => loadSchemes(schemeParams)}
+                  />
                 </div>
               </div>
+              <aside id="chat" className="chat-area" aria-label="Document chat assistant">
+                <Chat documentId={doc.id} language={language} />
+              </aside>
             </div>
           </section>
         )}

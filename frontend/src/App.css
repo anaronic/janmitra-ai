@@ -363,16 +363,52 @@ a {
   margin-bottom: 1rem;
 }
 
-.grid {
+.grid,
+.workspace-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 1rem;
   align-items: start;
 }
 
+.workspace-grid {
+  grid-template-columns: minmax(0, 1fr) minmax(360px, 420px);
+  gap: 1.25rem;
+}
+
+.insights-area {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.insight-cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(280px, 1fr));
+  gap: 1rem;
+  align-items: start;
+}
+
+.insight-cards #schemes {
+  grid-column: 1 / -1;
+}
+
+.chat-area {
+  position: sticky;
+  top: 1rem;
+  min-width: 0;
+  align-self: start;
+}
+
 @media (max-width: 880px) {
-  .grid {
+  .grid,
+  .workspace-grid,
+  .insight-cards {
     grid-template-columns: 1fr;
+  }
+  .chat-area {
+    position: static;
   }
   .journey-steps {
     grid-template-columns: 1fr;
@@ -569,7 +605,18 @@ a {
 .chat-panel {
   display: flex;
   flex-direction: column;
-  min-height: 480px;
+  min-height: min(680px, calc(100vh - 7rem));
+}
+
+.chat-panel .panel-head {
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.chat-panel h3 {
+  flex: 1;
+  min-width: 180px;
+  line-height: 1.2;
 }
 
 .messages {
@@ -579,7 +626,7 @@ a {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
-  max-height: 60vh;
+  max-height: 52vh;
 }
 
 .message {
