@@ -27,40 +27,40 @@ function SnapshotList({ title, items, empty }) {
 
 export default function DocumentSnapshot({ analysis, language }) {
   if (!analysis) return null;
-  const hi = language === "hi";
   return (
     <section className="panel snapshot-panel">
       <div className="panel-head">
-        <h3>{hi ? "दस्तावेज़ सारांश" : "Document Snapshot"}</h3>
-        <span className="badge badge-soft">{analysis.document_type || (hi ? "दस्तावेज़" : "Document")}</span>
+        <h3>{tr(language, "snapshotLoadingTitle")}</h3>
+        <span className="badge badge-soft">{analysis.document_type || tr(language, "document")}</span>
       </div>
       <div className="snapshot-grid">
         <SnapshotList
-          title={hi ? "लोग / संस्थाएँ" : "People / entities"}
+          title={tr(language, "peopleEntities")}
           items={analysis.entities}
-          empty={hi ? "कोई नामित संस्था नहीं मिली।" : "No named entities found."}
+          empty={tr(language, "noEntities")}
         />
         <SnapshotList
-          title={hi ? "महत्वपूर्ण तारीखें" : "Important dates"}
+          title={tr(language, "importantDates")}
           items={analysis.dates}
-          empty={hi ? "कोई तारीख नहीं मिली।" : "No dates detected."}
+          empty={tr(language, "noDates")}
         />
         <SnapshotList
-          title={hi ? "राशियाँ" : "Amounts"}
+          title={tr(language, "amounts")}
           items={analysis.amounts}
-          empty={hi ? "कोई राशि नहीं मिली।" : "No amounts detected."}
+          empty={tr(language, "noAmounts")}
         />
         <SnapshotList
-          title={hi ? "मुख्य शर्तें" : "Key clauses"}
+          title={tr(language, "keyClauses")}
           items={analysis.clauses}
-          empty={hi ? "कोई शर्त नहीं निकाली गई।" : "No clauses extracted."}
+          empty={tr(language, "noClauses")}
         />
         <SnapshotList
-          title={hi ? "हस्ताक्षरकर्ता" : "Signatories"}
+          title={tr(language, "signatories")}
           items={analysis.signatories}
-          empty={hi ? "कोई हस्ताक्षरकर्ता नहीं मिला।" : "No signatories detected."}
+          empty={tr(language, "noSignatories")}
         />
       </div>
     </section>
   );
 }
+import { tr } from "../i18n";

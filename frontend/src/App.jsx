@@ -18,32 +18,11 @@ import {
   getRisk,
   getSchemes,
 } from "./api";
+import { LANGUAGES, SECTION_LABELS, languageMeta, outputLanguage as languageName, tr } from "./i18n";
 import "./App.css";
 
 const RECENT_DOCUMENTS_KEY = "janmitra.recentDocuments";
 const FONT_STEPS = [0.9, 1, 1.1];
-const LANGUAGES = [
-  { value: "en", label: "English", nativeName: "English" },
-  { value: "hi", label: "Hindi", nativeName: "हिन्दी" },
-];
-const SECTION_LABELS = {
-  en: {
-    snapshot: "Snapshot",
-    "action-plan": "Action Plan",
-    risks: "Risks",
-    rights: "Rights",
-    schemes: "Schemes",
-    chat: "Ask Doc",
-  },
-  hi: {
-    snapshot: "सारांश",
-    "action-plan": "कार्य योजना",
-    risks: "जोखिम",
-    rights: "अधिकार",
-    schemes: "योजनाएँ",
-    chat: "प्रश्न पूछें",
-  },
-};
 const SECTIONS = ["snapshot", "action-plan", "risks", "rights", "schemes", "chat"];
 
 function loadRecentDocuments() {
@@ -79,49 +58,46 @@ function htmlList(items = [], fallback) {
 }
 
 function buildReport({ doc, analysis, risk, rights, actionPlan, schemes, language }) {
-  const hi = language === "hi";
-  const title = hi ? "JanMitra AI दस्तावेज़ रिपोर्ट" : "JanMitra AI Document Report";
+  const title = tr(language, "reportTitle");
   const sections = [
     `# ${title}`,
-    `**${hi ? "दस्तावेज़" : "Document"}:** ${doc?.filename || "Document"}`,
-    `**${hi ? "प्रकार" : "Type"}:** ${analysis?.document_type || "Unknown"}`,
+    `**${tr(language, "document")}:** ${doc?.filename || tr(language, "document")}`,
+    `**${tr(language, "type")}:** ${analysis?.document_type || "Unknown"}`,
     "",
-    `## ${hi ? "सारांश" : "Snapshot"}`,
-    `**${hi ? "लोग / संस्थाएँ" : "People / entities"}**\n${listLines(analysis?.entities)}`,
-    `**${hi ? "तारीखें" : "Dates"}**\n${listLines(analysis?.dates)}`,
-    `**${hi ? "राशियाँ" : "Amounts"}**\n${listLines(analysis?.amounts)}`,
-    `**${hi ? "मुख्य शर्तें" : "Key clauses"}**\n${listLines(analysis?.clauses)}`,
+    `## ${SECTION_LABELS[language]?.snapshot || SECTION_LABELS.en.snapshot}`,
+    `**${tr(language, "peopleEntities")}**\n${listLines(analysis?.entities)}`,
+    `**${tr(language, "dates")}**\n${listLines(analysis?.dates)}`,
+    `**${tr(language, "amounts")}**\n${listLines(analysis?.amounts)}`,
+    `**${tr(language, "keyClauses")}**\n${listLines(analysis?.clauses)}`,
     "",
-    `## ${hi ? "कार्य योजना" : "Action Plan"}`,
+    `## ${tr(language, "actionPlan")}`,
     `${listLines(actionPlan?.immediate_actions)}`,
-    `**${hi ? "दस्तावेज़" : "Documents"}**\n${listLines(actionPlan?.documents_to_collect)}`,
-    `**${hi ? "समयसीमाएँ" : "Deadlines"}**\n${listLines(actionPlan?.deadlines)}`,
+    `**${tr(language, "documentsToCollect")}**\n${listLines(actionPlan?.documents_to_collect)}`,
+    `**${tr(language, "deadlines")}**\n${listLines(actionPlan?.deadlines)}`,
     "",
-    `## ${hi ? "जोखिम" : "Risks"}`,
+    `## ${tr(language, "risks")}`,
     risk?.items?.length
       ? risk.items.map((item) => `- ${item.category} (${item.level}): ${item.explanation}`).join("\n")
-      : "- No notable risks detected.",
+      : `- ${tr(language, "noRisks")}`,
     "",
-    `## ${hi ? "अधिकार और जिम्मेदारियाँ" : "Rights & Responsibilities"}`,
-    `**${hi ? "आपको क्या करना है" : "What you must do"}**\n${listLines(rights?.you_must_do)}`,
-    `**${hi ? "दूसरे पक्ष को क्या करना है" : "What the other party must do"}**\n${listLines(rights?.other_party_must_do)}`,
+    `## ${tr(language, "rightsResponsibilities")}`,
+    `**${tr(language, "whatYouMustDo")}**\n${listLines(rights?.you_must_do)}`,
+    `**${tr(language, "otherPartyMustDo")}**\n${listLines(rights?.other_party_must_do)}`,
     "",
-    `## ${hi ? "योजनाएँ" : "Schemes"}`,
+    `## ${tr(language, "schemes")}`,
     schemes?.suggestions?.length
       ? schemes.suggestions.map((scheme) => `- ${scheme.name}: ${scheme.reason || scheme.eligibility_notes || ""}`).join("\n")
-      : "- No clearly relevant schemes found.",
+      : `- ${tr(language, "noSchemes")}`,
     "",
-    hi
-      ? "_यह रिपोर्ट केवल शैक्षिक मार्गदर्शन है। आधिकारिक स्रोतों से सत्यापित करें।_"
-      : "_This report is educational guidance only. Verify details with official sources._",
+    `_${tr(language, "reportDisclaimer")}_`,
   ];
   return sections.join("\n\n");
 }
 
 function buildReportHtml({ doc, analysis, risk, rights, actionPlan, schemes, language }) {
-  const hi = language === "hi";
-  const title = hi ? "JanMitra AI दस्तावेज़ रिपोर्ट" : "JanMitra AI Document Report";
-  const notFound = hi ? "इस दस्तावेज़ में नहीं मिला।" : "Not found in this document.";
+  const meta = languageMeta(language);
+  const title = tr(language, "reportTitle");
+  const notFound = tr(language, "notFound");
   const riskItems = risk?.items?.length
     ? risk.items
         .map(
@@ -134,7 +110,7 @@ function buildReportHtml({ doc, analysis, risk, rights, actionPlan, schemes, lan
           `,
         )
         .join("")
-    : `<p>${escapeHtml(hi ? "कोई बड़ा जोखिम नहीं मिला।" : "No notable risks detected.")}</p>`;
+    : `<p>${escapeHtml(tr(language, "noRisks"))}</p>`;
   const schemeItems = schemes?.suggestions?.length
     ? schemes.suggestions
         .map(
@@ -144,17 +120,17 @@ function buildReportHtml({ doc, analysis, risk, rights, actionPlan, schemes, lan
               <p>${escapeHtml(scheme.reason || scheme.eligibility_notes || "")}</p>
               ${
                 scheme.required_documents?.length
-                  ? `<p><b>${escapeHtml(hi ? "दस्तावेज़:" : "Documents:")}</b> ${escapeHtml(scheme.required_documents.join(", "))}</p>`
+                  ? `<p><b>${escapeHtml(tr(language, "documentsToCollect"))}:</b> ${escapeHtml(scheme.required_documents.join(", "))}</p>`
                   : ""
               }
             </article>
           `,
         )
         .join("")
-    : `<p>${escapeHtml(hi ? "कोई स्पष्ट रूप से संबंधित योजना नहीं मिली।" : "No clearly relevant schemes found.")}</p>`;
+    : `<p>${escapeHtml(tr(language, "noSchemes"))}</p>`;
 
   return `<!doctype html>
-<html lang="${hi ? "hi" : "en"}">
+<html lang="${meta.htmlLang}">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -181,48 +157,44 @@ function buildReportHtml({ doc, analysis, risk, rights, actionPlan, schemes, lan
   <main>
     <header>
       <h1>${escapeHtml(title)}</h1>
-      <p class="meta"><b>${escapeHtml(hi ? "दस्तावेज़" : "Document")}:</b> ${escapeHtml(doc?.filename || "Document")}</p>
-      <p class="meta"><b>${escapeHtml(hi ? "प्रकार" : "Type")}:</b> ${escapeHtml(analysis?.document_type || "Unknown")}</p>
+      <p class="meta"><b>${escapeHtml(tr(language, "document"))}:</b> ${escapeHtml(doc?.filename || tr(language, "document"))}</p>
+      <p class="meta"><b>${escapeHtml(tr(language, "type"))}:</b> ${escapeHtml(analysis?.document_type || "Unknown")}</p>
     </header>
 
     <section>
-      <h2>${escapeHtml(hi ? "सारांश" : "Snapshot")}</h2>
+      <h2>${escapeHtml(SECTION_LABELS[language]?.snapshot || SECTION_LABELS.en.snapshot)}</h2>
       <div class="grid two">
-        <div><b>${escapeHtml(hi ? "लोग / संस्थाएँ" : "People / entities")}</b><ul>${htmlList(analysis?.entities, notFound)}</ul></div>
-        <div><b>${escapeHtml(hi ? "तारीखें" : "Dates")}</b><ul>${htmlList(analysis?.dates, notFound)}</ul></div>
-        <div><b>${escapeHtml(hi ? "राशियाँ" : "Amounts")}</b><ul>${htmlList(analysis?.amounts, notFound)}</ul></div>
-        <div><b>${escapeHtml(hi ? "मुख्य शर्तें" : "Key clauses")}</b><ul>${htmlList(analysis?.clauses, notFound)}</ul></div>
+        <div><b>${escapeHtml(tr(language, "peopleEntities"))}</b><ul>${htmlList(analysis?.entities, notFound)}</ul></div>
+        <div><b>${escapeHtml(tr(language, "dates"))}</b><ul>${htmlList(analysis?.dates, notFound)}</ul></div>
+        <div><b>${escapeHtml(tr(language, "amounts"))}</b><ul>${htmlList(analysis?.amounts, notFound)}</ul></div>
+        <div><b>${escapeHtml(tr(language, "keyClauses"))}</b><ul>${htmlList(analysis?.clauses, notFound)}</ul></div>
       </div>
     </section>
 
     <section>
-      <h2>${escapeHtml(hi ? "कार्य योजना" : "Action Plan")}</h2>
-      <b>${escapeHtml(hi ? "तुरंत करें" : "Immediate actions")}</b><ul>${htmlList(actionPlan?.immediate_actions, notFound)}</ul>
-      <b>${escapeHtml(hi ? "दस्तावेज़ जुटाएँ" : "Documents to collect")}</b><ul>${htmlList(actionPlan?.documents_to_collect, notFound)}</ul>
-      <b>${escapeHtml(hi ? "समयसीमाएँ" : "Deadlines")}</b><ul>${htmlList(actionPlan?.deadlines, notFound)}</ul>
+      <h2>${escapeHtml(tr(language, "actionPlan"))}</h2>
+      <b>${escapeHtml(tr(language, "immediateActions"))}</b><ul>${htmlList(actionPlan?.immediate_actions, notFound)}</ul>
+      <b>${escapeHtml(tr(language, "documentsToCollect"))}</b><ul>${htmlList(actionPlan?.documents_to_collect, notFound)}</ul>
+      <b>${escapeHtml(tr(language, "deadlines"))}</b><ul>${htmlList(actionPlan?.deadlines, notFound)}</ul>
     </section>
 
     <section>
-      <h2>${escapeHtml(hi ? "जोखिम" : "Risks")}</h2>
+      <h2>${escapeHtml(tr(language, "risks"))}</h2>
       ${riskItems}
     </section>
 
     <section>
-      <h2>${escapeHtml(hi ? "अधिकार और जिम्मेदारियाँ" : "Rights & Responsibilities")}</h2>
-      <b>${escapeHtml(hi ? "आपको क्या करना है" : "What you must do")}</b><ul>${htmlList(rights?.you_must_do, notFound)}</ul>
-      <b>${escapeHtml(hi ? "दूसरे पक्ष को क्या करना है" : "What the other party must do")}</b><ul>${htmlList(rights?.other_party_must_do, notFound)}</ul>
+      <h2>${escapeHtml(tr(language, "rightsResponsibilities"))}</h2>
+      <b>${escapeHtml(tr(language, "whatYouMustDo"))}</b><ul>${htmlList(rights?.you_must_do, notFound)}</ul>
+      <b>${escapeHtml(tr(language, "otherPartyMustDo"))}</b><ul>${htmlList(rights?.other_party_must_do, notFound)}</ul>
     </section>
 
     <section>
-      <h2>${escapeHtml(hi ? "योजनाएँ" : "Schemes")}</h2>
+      <h2>${escapeHtml(tr(language, "schemes"))}</h2>
       ${schemeItems}
     </section>
 
-    <p class="disclaimer">${escapeHtml(
-      hi
-        ? "यह रिपोर्ट केवल शैक्षिक मार्गदर्शन है। आधिकारिक स्रोतों से सत्यापित करें।"
-        : "This report is educational guidance only. Verify details with official sources.",
-    )}</p>
+    <p class="disclaimer">${escapeHtml(tr(language, "reportDisclaimer"))}</p>
   </main>
 </body>
 </html>`;
@@ -256,8 +228,7 @@ function App() {
   const [contentLanguage, setContentLanguage] = useState("en");
   const [activeSection, setActiveSection] = useState("snapshot");
   const sectionLabels = SECTION_LABELS[language] || SECTION_LABELS.en;
-  const outputLanguage = LANGUAGES.find((item) => item.value === language)?.label || "English";
-  const hi = language === "hi";
+  const outputLanguage = languageName(language);
 
   useEffect(() => {
     document.documentElement.style.fontSize = `${FONT_STEPS[fontStep] * 100}%`;
@@ -399,7 +370,7 @@ function App() {
         getDocument(item.id),
         getAnalysis(item.id).catch(() =>
           analyzeDocument(item.id, {
-            language: LANGUAGES.find((entry) => entry.value === nextLanguage)?.label || "English",
+            language: languageName(nextLanguage),
           }),
         ),
       ]);
@@ -450,14 +421,10 @@ function App() {
   async function copyReport() {
     try {
       await navigator.clipboard.writeText(currentReport());
-      setReportStatus(hi ? "रिपोर्ट कॉपी हो गई।" : "Report copied.");
+      setReportStatus(tr(language, "reportCopied"));
     } catch {
       downloadReport();
-      setReportStatus(
-        hi
-          ? "क्लिपबोर्ड उपलब्ध नहीं था, इसलिए रिपोर्ट डाउनलोड कर दी गई।"
-          : "Clipboard was unavailable, so the report was downloaded.",
-      );
+      setReportStatus(tr(language, "clipboardFallback"));
     }
   }
 
@@ -469,31 +436,27 @@ function App() {
     link.download = `${(doc?.filename || "janmitra-report").replace(/\.[^.]+$/, "")}-mobile-report.html`;
     link.click();
     URL.revokeObjectURL(url);
-    setReportStatus(hi ? "मोबाइल रिपोर्ट डाउनलोड हो गई।" : "Mobile report downloaded.");
+    setReportStatus(tr(language, "reportDownloaded"));
   }
 
   function printReport() {
     const reportWindow = window.open("", "_blank");
     if (!reportWindow) {
       downloadReport();
-      setReportStatus(
-        hi
-          ? "पॉप-अप बंद था, इसलिए मोबाइल रिपोर्ट डाउनलोड कर दी गई।"
-          : "Popup was blocked, so the mobile report was downloaded.",
-      );
+      setReportStatus(tr(language, "popupFallback"));
       return;
     }
     reportWindow.document.write(currentReportHtml());
     reportWindow.document.close();
     reportWindow.focus();
     setTimeout(() => reportWindow.print(), 250);
-    setReportStatus(hi ? "PDF सेव करने के लिए प्रिंट विकल्प चुनें।" : "Choose Print/Save as PDF in the print dialog.");
+    setReportStatus(tr(language, "printHint"));
   }
 
   return (
     <div className="gov-page">
       <a className="skip-link" href="#main-content">
-        {hi ? "मुख्य सामग्री पर जाएँ" : "Skip to main content"}
+        {tr(language, "skip")}
       </a>
 
       <div className="utility-bar">
@@ -529,7 +492,7 @@ function App() {
               </button>
             </span>
             <label className="language-select">
-              <span>{hi ? "भाषा" : "Language"}</span>
+              <span>{tr(language, "language")}</span>
               <select value={language} onChange={(e) => setLanguage(e.target.value)}>
                 {LANGUAGES.map((item) => (
                   <option key={item.value} value={item.value}>
@@ -564,10 +527,10 @@ function App() {
       <nav className="gov-nav" aria-label="Primary">
         <div className="gov-nav-inner">
           <a className="nav-item active" href="#main-content" aria-current="page">
-            {hi ? "होम" : "Home"}
+            {tr(language, "home")}
           </a>
           <a className="nav-item" href="#document-analysis">
-            {hi ? "दस्तावेज़ विश्लेषण" : "Document Analysis"}
+            {tr(language, "documentAnalysis")}
           </a>
           {doc ? (
             <>
@@ -584,14 +547,14 @@ function App() {
             </>
           ) : (
             <>
-              <span className="nav-item locked" aria-disabled="true" title="Upload a document first">
-                🔒 Action Plan
+              <span className="nav-item locked" aria-disabled="true" title={tr(language, "uploadFirst")}>
+                🔒 {sectionLabels["action-plan"]}
               </span>
-              <span className="nav-item locked" aria-disabled="true" title="Upload a document first">
-                🔒 Rights
+              <span className="nav-item locked" aria-disabled="true" title={tr(language, "uploadFirst")}>
+                🔒 {sectionLabels.rights}
               </span>
-              <span className="nav-item locked" aria-disabled="true" title="Upload a document first">
-                🔒 Schemes
+              <span className="nav-item locked" aria-disabled="true" title={tr(language, "uploadFirst")}>
+                🔒 {sectionLabels.schemes}
               </span>
             </>
           )}
@@ -600,9 +563,7 @@ function App() {
 
       <main id="main-content" className="gov-main">
         <p className="page-intro">
-          {language === "hi"
-            ? "अपने दस्तावेज़, अधिकार, जोखिम और सरकारी योजनाएँ सरल भाषा में समझें।"
-            : "Understand your documents, rights, risks, and government schemes — in your language."}
+          {tr(language, "pageIntro")}
         </p>
 
         {!doc ? (
@@ -617,8 +578,8 @@ function App() {
             {recentDocs.length > 0 && (
               <section className="panel recent-panel">
                 <div className="panel-head">
-                  <h3>{hi ? "हाल के दस्तावेज़" : "Recent documents"}</h3>
-                  {loading.recent && <span className="muted">{hi ? "खोला जा रहा है…" : "Opening…"}</span>}
+                  <h3>{tr(language, "recentDocuments")}</h3>
+                  {loading.recent && <span className="muted">{tr(language, "opening")}</span>}
                 </div>
                 {errors.recent && <p className="error">{errors.recent}</p>}
                 <div className="recent-list">
@@ -627,16 +588,16 @@ function App() {
                       <div>
                         <strong>{item.filename}</strong>
                         <p className="muted">
-                          {item.document_type || (hi ? "दस्तावेज़" : "Document")} ·{" "}
+                          {item.document_type || tr(language, "document")} ·{" "}
                           {new Date(item.saved_at).toLocaleString()}
                         </p>
                       </div>
                       <div className="recent-actions">
                         <button type="button" onClick={() => openRecentDocument(item)} disabled={loading.recent}>
-                          {hi ? "खोलें" : "Open"}
+                          {tr(language, "open")}
                         </button>
                         <button type="button" className="ghost" onClick={() => removeDocument(item)}>
-                          {hi ? "हटाएँ" : "Delete"}
+                          {tr(language, "delete")}
                         </button>
                       </div>
                     </article>
@@ -655,17 +616,17 @@ function App() {
                 )}
               </div>
               <button className="ghost" onClick={reset}>
-                {hi ? "दूसरा अपलोड करें" : "Upload another"}
+                {tr(language, "uploadAnother")}
               </button>
               <div className="doc-actions">
                 <button type="button" className="ghost" onClick={copyReport}>
-                  {hi ? "रिपोर्ट कॉपी करें" : "Copy report"}
+                  {tr(language, "copyReport")}
                 </button>
                 <button type="button" onClick={downloadReport}>
-                  {hi ? "मोबाइल रिपोर्ट" : "Mobile report"}
+                  {tr(language, "mobileReport")}
                 </button>
                 <button type="button" onClick={printReport}>
-                  {hi ? "PDF सेव करें" : "Save PDF"}
+                  {tr(language, "savePdf")}
                 </button>
               </div>
             </div>
@@ -691,11 +652,9 @@ function App() {
                 <div className="section-pane" hidden={activeSection !== "snapshot"}>
                   {loading.analysis ? (
                     <section className="panel">
-                      <h3>{hi ? "दस्तावेज़ सारांश" : "Document Snapshot"}</h3>
+                      <h3>{tr(language, "snapshotLoadingTitle")}</h3>
                       <p className="muted">
-                        {hi
-                          ? "चुनी गई भाषा में सारांश फिर से तैयार हो रहा है…"
-                          : "Regenerating the snapshot in the selected language…"}
+                        {tr(language, "snapshotRegenerating")}
                       </p>
                     </section>
                   ) : (

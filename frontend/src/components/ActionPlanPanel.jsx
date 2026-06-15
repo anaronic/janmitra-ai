@@ -16,62 +16,60 @@ function PlanGroup({ title, items, empty }) {
 }
 
 export default function ActionPlanPanel({ plan, loading, error, language, onRetry }) {
-  const hi = language === "hi";
   return (
     <section id="action-plan" className="panel">
       <div className="panel-head">
-        <h3>{hi ? "नागरिक कार्य योजना" : "Citizen Action Plan"}</h3>
+        <h3>{tr(language, "citizenActionPlan")}</h3>
         {error && (
           <button type="button" className="ghost small-btn" onClick={onRetry}>
-            {hi ? "फिर कोशिश करें" : "Retry"}
+            {tr(language, "retry")}
           </button>
         )}
       </div>
-      {loading && <p className="muted">{hi ? "व्यावहारिक अगले कदम तैयार हो रहे हैं…" : "Preparing practical next steps…"}</p>}
+      {loading && <p className="muted">{tr(language, "preparingSteps")}</p>}
       {error && (
         <div className="error-box">
-          <strong>{hi ? "कार्य योजना उपलब्ध नहीं है।" : "Action plan unavailable."}</strong>
+          <strong>{tr(language, "actionPlanUnavailable")}</strong>
           <p>{error}</p>
           <p className="muted">
-            {hi
-              ? "अगर backend शुरू हो रहा है, 30 सेकंड रुककर फिर कोशिश करें।"
-              : "If the backend is waking up, wait 30 seconds and retry."}
+            {tr(language, "coldStartRetry")}
           </p>
         </div>
       )}
       {!loading && !error && plan && (
         <>
           <PlanGroup
-            title={hi ? "पहले यह करें" : "Do first"}
+            title={tr(language, "doFirst")}
             items={plan.immediate_actions}
-            empty={hi ? "कोई तत्काल कदम नहीं मिला।" : "No immediate action was identified."}
+            empty={tr(language, "noImmediateAction")}
           />
           <PlanGroup
-            title={hi ? "इकट्ठा करने वाले दस्तावेज़" : "Documents to collect"}
+            title={tr(language, "documentsToCollect")}
             items={plan.documents_to_collect}
-            empty={hi ? "कोई अतिरिक्त दस्तावेज़ सूचीबद्ध नहीं है।" : "No extra documents listed."}
+            empty={tr(language, "noExtraDocuments")}
           />
           <PlanGroup
-            title={hi ? "समयसीमाएँ" : "Deadlines"}
+            title={tr(language, "deadlines")}
             items={plan.deadlines}
-            empty={hi ? "कोई समयसीमा नहीं मिली।" : "No deadlines extracted."}
+            empty={tr(language, "noDeadlines")}
           />
           <PlanGroup
-            title={hi ? "पूछने योग्य प्रश्न" : "Questions to ask"}
+            title={tr(language, "questionsToAsk")}
             items={plan.questions_to_ask}
-            empty={hi ? "कोई प्रश्न सुझाया नहीं गया।" : "No questions suggested."}
+            empty={tr(language, "noQuestions")}
           />
           <PlanGroup
-            title={hi ? "कार्रवाई से पहले सत्यापित करें" : "Verify before acting"}
+            title={tr(language, "verifyBeforeActing")}
             items={plan.verification_steps}
-            empty={hi ? "जारी करने वाले कार्यालय या आधिकारिक पोर्टल से सत्यापित करें।" : "Verify with the issuing office or official portal."}
+            empty={tr(language, "verifyOfficial")}
           />
           {plan.disclaimer && <p className="disclaimer">{plan.disclaimer}</p>}
         </>
       )}
       {!loading && !error && !plan && (
-        <p className="muted">{hi ? "कार्य योजना यहाँ दिखाई देगी।" : "Action plan will appear here."}</p>
+        <p className="muted">{tr(language, "actionPlanWillAppear")}</p>
       )}
     </section>
   );
 }
+import { tr } from "../i18n";

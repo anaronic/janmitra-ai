@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import { analyzeDemoDocument, analyzeDocument, getDemoDocuments, uploadDocument } from "../api";
+import { tr } from "../i18n";
 
 function friendlyError(message) {
   const text = message || "Something went wrong.";
@@ -61,14 +62,12 @@ export default function Upload({ onReady, language, outputLanguage, languages })
 
   return (
     <div id="document-analysis" className="upload-card">
-      <h2>{language === "hi" ? "दस्तावेज़ अपलोड करें" : "Upload a document"}</h2>
+      <h2>{tr(language, "uploadDocument")}</h2>
       <p className="muted">
-        {language === "hi"
-          ? "PDF, छवि या स्कैन दस्तावेज़ (अधिकतम 20 MB)। कोई गुप्त जानकारी आवश्यक नहीं।"
-          : "PDF, image, or scanned document (max 20 MB). No secrets required."}
+        {tr(language, "uploadHelp")}
       </p>
       <p className="supported-languages">
-        {language === "hi" ? "समर्थित भाषाएँ" : "Supported languages"}:{" "}
+        {tr(language, "supportedLanguages")}:{" "}
         {(languages || []).map((item) => item.nativeName || item.label).join(" · ")}
       </p>
       <input
@@ -80,41 +79,35 @@ export default function Upload({ onReady, language, outputLanguage, languages })
       />
       {busy && (
         <p className="muted">
-          {language === "hi"
-            ? "अपलोड और विश्लेषण हो रहा है… इसमें कुछ सेकंड लग सकते हैं।"
-            : "Uploading and analyzing… this can take a few seconds."}
+          {tr(language, "uploading")}
         </p>
       )}
       {error && (
         <div className="error-box">
-          <strong>{language === "hi" ? "यह चरण पूरा नहीं हो सका।" : "Could not complete that step."}</strong>
+          <strong>{tr(language, "couldNotComplete")}</strong>
           <p>{error}</p>
           <button type="button" className="ghost" onClick={() => inputRef.current?.click()}>
-            {language === "hi" ? "फाइल फिर चुनें" : "Choose file again"}
+            {tr(language, "chooseFileAgain")}
           </button>
         </div>
       )}
 
       <div className="sample-mode">
         <div>
-          <h3>{language === "hi" ? "डेमो मोड" : "Judge demo mode"}</h3>
+          <h3>{tr(language, "judgeDemoMode")}</h3>
           <p className="muted">
-            {language === "hi"
-              ? "सैंपल दस्तावेज़ से JanMitra तुरंत आज़माएँ।"
-              : "Try JanMitra instantly with sample notices, bills, or certificates."}
+            {tr(language, "judgeDemoHelp")}
           </p>
         </div>
         {!samplesLoaded ? (
           <button type="button" className="ghost" onClick={loadSamples} disabled={busy}>
-            {language === "hi" ? "सैंपल दस्तावेज़ दिखाएँ" : "Show sample documents"}
+            {tr(language, "showSamples")}
           </button>
         ) : (
           <div className="sample-grid">
             {samples.length === 0 ? (
               <p className="muted">
-                {language === "hi"
-                  ? "अभी कोई सैंपल उपलब्ध नहीं है। कृपया फाइल अपलोड करें।"
-                  : "No samples are available yet. Please upload a file."}
+                {tr(language, "noSamples")}
               </p>
             ) : (
               samples.map((sample) => (
@@ -130,7 +123,7 @@ export default function Upload({ onReady, language, outputLanguage, languages })
                   <small>
                     {sample.document_type} · {sample.language}
                   </small>
-                  {sampleBusy === sample.id && <em>{language === "hi" ? "लोड हो रहा है…" : "Loading…"}</em>}
+                  {sampleBusy === sample.id && <em>{tr(language, "loading")}</em>}
                 </button>
               ))
             )}

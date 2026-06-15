@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { getSuggestedQuestions, sendChat } from "../api";
+import { outputLanguage as languageName, tr } from "../i18n";
 import { isSpeechSupported, speak, stopSpeaking } from "../speech";
 
 const LEVELS = [
-  { value: "basic", label: { en: "Basic", hi: "सरल" } },
-  { value: "standard", label: { en: "Standard", hi: "मानक" } },
-  { value: "advanced", label: { en: "Advanced", hi: "उन्नत" } },
+  { value: "basic", labelKey: "levelBasic" },
+  { value: "standard", labelKey: "levelStandard" },
+  { value: "advanced", labelKey: "levelAdvanced" },
 ];
 
 export default function Chat({ documentId, language }) {
@@ -16,7 +17,7 @@ export default function Chat({ documentId, language }) {
   const [error, setError] = useState("");
   const [suggestions, setSuggestions] = useState([]);
   const bottomRef = useRef(null);
-  const outputLanguage = language === "hi" ? "Hindi" : "English";
+  const outputLanguage = languageName(language);
 
   useEffect(() => {
     if (!documentId) return;
@@ -50,13 +51,13 @@ export default function Chat({ documentId, language }) {
   return (
     <section className="panel chat-panel">
       <div className="panel-head">
-        <h3>{language === "hi" ? "इस दस्तावेज़ पर सवाल पूछें" : "Ask about this document"}</h3>
+        <h3>{tr(language, "askAboutDocument")}</h3>
         <label className="level-select">
-          {language === "hi" ? "स्तर" : "Level"}:{" "}
+          {tr(language, "level")}:{" "}
           <select value={level} onChange={(e) => setLevel(e.target.value)}>
             {LEVELS.map((l) => (
               <option key={l.value} value={l.value}>
-                {l.label[language] || l.label.en}
+                {tr(language, l.labelKey)}
               </option>
             ))}
           </select>
@@ -65,7 +66,7 @@ export default function Chat({ documentId, language }) {
 
       {messages.length === 0 && suggestions.length > 0 && (
         <div className="suggestions">
-          <p className="muted">{language === "hi" ? "पूछ कर देखें:" : "Try asking:"}</p>
+          <p className="muted">{tr(language, "tryAsking")}</p>
           {suggestions.map((q, i) => (
             <button key={i} className="chip" onClick={() => send(q)}>
               {q}
@@ -91,17 +92,17 @@ export default function Chat({ documentId, language }) {
               {m.role === "assistant" && isSpeechSupported() && (
                 <div className="bubble-actions">
                   <button className="listen" onClick={() => speak(m.content, m.language)}>
-                    🔊 Listen
+                    🔊 {tr(language, "listen")}
                   </button>
                   <button className="listen ghost" onClick={stopSpeaking}>
-                    ⏹ Stop
+                    ⏹ {tr(language, "stop")}
                   </button>
                 </div>
               )}
             </div>
           </div>
         ))}
-        {busy && <p className="muted">{language === "hi" ? "सोचा जा रहा है…" : "Thinking…"}</p>}
+        {busy && <p className="muted">{tr(language, "thinking")}</p>}
         <div ref={bottomRef} />
       </div>
 
@@ -117,15 +118,11 @@ export default function Chat({ documentId, language }) {
         <input
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder={
-            language === "hi"
-              ? "अपना प्रश्न हिंदी या किसी समर्थित भाषा में लिखें…"
-              : "Type your question in any supported language…"
-          }
+          placeholder={tr(language, "chatPlaceholder")}
           disabled={busy}
         />
         <button type="submit" disabled={busy || !input.trim()}>
-          {language === "hi" ? "भेजें" : "Send"}
+          {tr(language, "send")}
         </button>
       </form>
     </section>
