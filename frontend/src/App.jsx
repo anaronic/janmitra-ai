@@ -63,6 +63,7 @@ function App() {
   const [activeSection, setActiveSection] = useState("snapshot");
   const sectionLabels = SECTION_LABELS[language] || SECTION_LABELS.en;
   const outputLanguage = LANGUAGES.find((item) => item.value === language)?.label || "English";
+  const hi = language === "hi";
 
   useEffect(() => {
     document.documentElement.style.fontSize = `${FONT_STEPS[fontStep] * 100}%`;
@@ -183,7 +184,7 @@ function App() {
   return (
     <div className="gov-page">
       <a className="skip-link" href="#main-content">
-        Skip to main content
+        {hi ? "मुख्य सामग्री पर जाएँ" : "Skip to main content"}
       </a>
 
       <div className="utility-bar">
@@ -219,7 +220,7 @@ function App() {
               </button>
             </span>
             <label className="language-select">
-              <span>Language</span>
+              <span>{hi ? "भाषा" : "Language"}</span>
               <select value={language} onChange={(e) => setLanguage(e.target.value)}>
                 {LANGUAGES.map((item) => (
                   <option key={item.value} value={item.value}>
@@ -254,10 +255,10 @@ function App() {
       <nav className="gov-nav" aria-label="Primary">
         <div className="gov-nav-inner">
           <a className="nav-item active" href="#main-content" aria-current="page">
-            Home
+            {hi ? "होम" : "Home"}
           </a>
           <a className="nav-item" href="#document-analysis">
-            Document Analysis
+            {hi ? "दस्तावेज़ विश्लेषण" : "Document Analysis"}
           </a>
           {doc ? (
             <>
@@ -315,7 +316,7 @@ function App() {
                 )}
               </div>
               <button className="ghost" onClick={reset}>
-                Upload another
+                {hi ? "दूसरा अपलोड करें" : "Upload another"}
               </button>
             </div>
 
@@ -337,7 +338,18 @@ function App() {
                 </div>
 
                 <div className="section-pane" hidden={activeSection !== "snapshot"}>
-                  <DocumentSnapshot analysis={analysis} language={language} />
+                  {loading.analysis ? (
+                    <section className="panel">
+                      <h3>{hi ? "दस्तावेज़ सारांश" : "Document Snapshot"}</h3>
+                      <p className="muted">
+                        {hi
+                          ? "चुनी गई भाषा में सारांश फिर से तैयार हो रहा है…"
+                          : "Regenerating the snapshot in the selected language…"}
+                      </p>
+                    </section>
+                  ) : (
+                    <DocumentSnapshot analysis={analysis} language={language} />
+                  )}
                 </div>
                 <div className="section-pane" hidden={activeSection !== "action-plan"}>
                   <ActionPlanPanel

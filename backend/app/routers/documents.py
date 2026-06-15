@@ -8,7 +8,7 @@ from fastapi import APIRouter, File, HTTPException, UploadFile
 
 from app.database import get_connection
 from app.models import DocumentAnalysis, DocumentList, DocumentSummary
-from app.services import gemini, storage
+from app.services import gemini, sample_documents, storage
 
 router = APIRouter(prefix="/api/documents", tags=["documents"])
 
@@ -101,9 +101,15 @@ def analyze_document(document_id: str, language: str | None = None) -> DocumentA
         if row is None:
             raise HTTPException(status_code=404, detail="Document not found.")
 
-        file_bytes = Path(row["stored_path"]).read_bytes()
-        extraction = gemini.analyze_document(file_bytes, row["content_type"] or "application/pdf", language)
-        analysis = _build_analysis(document_id, extraction)
+        sample_id = sample_documents.sample_id_from_document_id(document_id)
+        if sample_id:
+            analysis = sample_documents.analysis_for(
+                sample_documents.get_sample(sample_id), document_id, language
+            )
+        else:
+            file_bytes = Path(row["stored_path"]).read_bytes()
+            extraction = gemini.analyze_document(file_bytes, row["content_type"] or "application/pdf", language)
+            analysis = _build_analysis(document_id, extraction)
 
         conn.execute(
             "INSERT INTO document_analysis (document_id, raw_text, extraction_json) "

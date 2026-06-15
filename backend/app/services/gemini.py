@@ -147,12 +147,15 @@ EDUCATION_GUIDANCE = {
 def _language_instruction(language: str | None) -> str:
     normalized = (language or "").strip().lower()
     if normalized in {"hi", "hindi", "हिन्दी", "हिंदी"}:
-        return "Write all user-facing text in Hindi using Devanagari script."
+        return (
+            "Write every user-facing JSON string value in Hindi using Devanagari script. "
+            "Do not leave explanations, actions, questions, reasons, deadlines, or document names in English unless they are official names, IDs, URLs, or exact quoted source text."
+        )
     if normalized in {"en", "english"}:
-        return "Write all user-facing text in English."
+        return "Write every user-facing JSON string value in English."
     if normalized:
-        return f"Write all user-facing text in {language}."
-    return "Write all user-facing text in the user's selected language if provided; otherwise use English."
+        return f"Write every user-facing JSON string value in {language}."
+    return "Write every user-facing JSON string value in the user's selected language if provided; otherwise use English."
 
 CHAT_SYSTEM_PROMPT = """You are JanMitra AI, a multilingual financial and legal literacy assistant
 for Indian citizens. You are educational only and must never give legal or financial advice.
