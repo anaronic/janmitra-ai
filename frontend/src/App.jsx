@@ -568,7 +568,7 @@ function App() {
 
         {!doc ? (
           <>
-            <GuidedJourney />
+            <GuidedJourney language={language} />
             <Upload
               onReady={handleReady}
               language={language}
